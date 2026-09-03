@@ -6,7 +6,7 @@ import duckdb
 import pandas as pd
 import numpy as np
 
-from .features import safe_cagr, add_experience_features, add_transparent_indices, diagnostic_flags
+from .features import safe_cagr, add_experience_features, add_absolute_model_features, add_transparent_indices, diagnostic_flags
 
 
 def _extract_member(zf: zipfile.ZipFile, member: str, temp_dir: Path) -> Path:
@@ -174,6 +174,7 @@ def build_annual_aggregates(zip_path: Path, work_dir: Path, out_dir: Path,
 
 def build_latest_snapshot(agg_dir: Path, out_file: Path, latest_year: int = 2024,
                           base_year: int = 2019, min_market_usd: float = 5_000_000,
+                          growth_base_min_usd: float = 1_000_000,
                           metadata_dir: Path | None = None):
     con = duckdb.connect()
     ly = agg_dir / f"year={latest_year}"
@@ -192,20 +193,21 @@ def build_latest_snapshot(agg_dir: Path, out_file: Path, latest_year: int = 2024
         LEFT JOIN read_parquet('{ly / 'bd_destination.parquet'}') d USING(year,destination_code)
         WHERE m.destination_market_usd >= {min_market_usd}
       ), base AS (
-        SELECT hs6,destination_code,destination_market_usd AS market_base
+        SELECT hs6,destination_code,destination_market_usd AS market_base_usd_5y
         FROM read_parquet('{by / 'market_structure.parquet'}')
       )
-      SELECT cur.*, base.market_base
+      SELECT cur.*, base.market_base_usd_5y
       FROM cur LEFT JOIN base USING(hs6,destination_code)
     """
     df = con.execute(sql).df()
     con.close()
     df["hs6"] = df["hs6"].astype(str).str.zfill(6)
     df["bd_market_share"] = df["bd_exports_to_destination_usd"] / df["destination_market_usd"].replace(0, np.nan)
-    df["market_cagr_5y"] = safe_cagr(df["market_base"], df["destination_market_usd"], latest_year-base_year)
+    df["market_cagr_5y"] = safe_cagr(df["market_base_usd_5y"], df["destination_market_usd"], latest_year-base_year)
     df = add_experience_features(df)
+    df = add_absolute_model_features(df)
     df["log_market_usd"] = np.log1p(df["destination_market_usd"])
-    df = add_transparent_indices(df)
+    df = add_transparent_indices(df, base_col="market_base_usd_5y", growth_base_min_usd=growth_base_min_usd)
     df["diagnostic_flags"] = df.apply(diagnostic_flags, axis=1)
     if metadata_dir is not None:
         cfile = metadata_dir / "countries.parquet"

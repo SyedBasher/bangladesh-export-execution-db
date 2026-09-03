@@ -11,7 +11,7 @@ The public edition should be useful enough to establish credibility. It can incl
 The following are candidates for commissioned or licensed access rather than automatic public release:
 
 - model-estimated product-market entry probabilities;
-- post-entry survival probabilities;
+- post-entry persistence probabilities;
 - execution probability and confidence grades;
 - detailed competitor and tariff diagnostics;
 - firm-capability matching;

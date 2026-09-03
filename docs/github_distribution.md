@@ -19,6 +19,6 @@ Suggested navigation:
 
 ## Internal repository
 
-Keep model fitting code, model artifacts, entry/survival scores, diagnostic rules that are commercially sensitive, firm-capability matches, and client-specific data in a separate private repository or private storage.
+Keep model fitting code, model artifacts, entry/persistence scores, diagnostic rules that are commercially sensitive, firm-capability matches, and client-specific data in a separate private repository or private storage.
 
 The public repository should demonstrate reproducibility of the descriptive layer without publishing the entire commercial execution layer.

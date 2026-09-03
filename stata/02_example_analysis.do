@@ -8,6 +8,6 @@ keep if destination_market_usd >= 50000000
 keep if market_cagr_5y > 0
 keep if bd_market_share < .01
 
-gsort -market_attractiveness -readiness_index
+gsort -market_attractiveness -trade_familiarity_index
 list hs6 product_name destination_name destination_market_usd market_cagr_5y bd_market_share ///
-     market_attractiveness readiness_index in 1/25, noobs clean
+     market_attractiveness trade_familiarity_index in 1/25, noobs clean

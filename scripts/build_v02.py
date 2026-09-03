@@ -7,6 +7,7 @@ import pandas as pd
 from beod.config import load_config
 from beod.enrichments import add_v02_enrichments
 from beod.product_space import compute_latest_complexity
+from beod.screening import add_capability_screen
 from beod.export_formats import export_public_v02, build_duckdb
 
 cfg=load_config(ROOT/'config'/'build.yml')
@@ -21,9 +22,10 @@ derived=ROOT/'data/derived/v02'; derived.mkdir(parents=True,exist_ok=True)
 c.to_parquet(derived/'eci_latest.parquet',index=False,compression='zstd')
 pdprod.to_parquet(derived/'product_space_latest.parquet',index=False,compression='zstd')
 x['hs6']=x['hs6'].astype(str).str.zfill(6)
-keep=['hs6','pci','pci_rank','pci_percentile','density_bd','density_bd_percentile','rca_bd','bd_rca1','world_exports_usd']
+keep=['hs6','pci','pci_rank','pci_percentile','density_bd','density_bd_percentile','rca_bd','bd_rca1','bd_exports_usd','ubiquity_rca1','world_exports_usd']
 y=x.merge(pdprod[keep],on='hs6',how='left',validate='many_to_one')
 y=add_v02_enrichments(y,ROOT/'data/external')
+y=add_capability_screen(y)
 y['product_space_status']=y['pci'].notna().map({True:'derived_from_BACI_202601',False:'missing'})
 out=ROOT/'data/private/product_market_v02.parquet'
 y.to_parquet(out,index=False,compression='zstd')

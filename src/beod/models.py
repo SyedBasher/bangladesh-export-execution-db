@@ -16,6 +16,7 @@ from sklearn.preprocessing import StandardScaler
 FEATURES = [
     "log_market_usd","market_cagr_5y","supplier_hhi","top_supplier_share",
     "destination_familiarity","product_experience",
+    "log_product_exports_usd","log_destination_exports_usd","log_product_destinations",
 ]
 
 

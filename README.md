@@ -19,7 +19,7 @@ BEOED does **not** claim that a generic export-potential score is proprietary. I
 
 `market screen -> capability proximity -> entry probability -> persistence -> observable constraint signatures -> candidate firm capability -> value capture`
 
-The public files expose transparent descriptive components. Entry, survival, execution, firm-match and later constraint outputs remain research/commissioned layers unless explicitly released.
+The public files expose transparent descriptive components. Entry, persistence, durable-entry, firm-match and later constraint outputs remain research/commissioned layers unless explicitly released.
 
 ## Key interpretation rule
 
@@ -29,7 +29,7 @@ The public files expose transparent descriptive components. Entry, survival, exe
 
 ```bash
 pip install -r requirements.txt
-python scripts/build_all.py     # v0.1 trade core + private entry/survival models
+python scripts/build_all.py     # v0.1 trade core + private entry/persistence models
 python scripts/build_v02.py     # BACI RCA/ECI/PCI/density + transparent public screening file
 python scripts/build_v03.py     # firm registry + private candidate firm matches
 python scripts/build_v04.py     # only after documented value-capture priors are supplied
@@ -45,6 +45,6 @@ Core trade data: CEPII BACI 202601, HS2012, 2012–2024. BACI reconciles exporte
 
 ## Model interpretation
 
-The entry model asks whether a currently sub-threshold product-market relationship crosses the configured threshold within three years. The survival model is conditional on entry and, from v0.1.1 onward, uses **pre-entry features measured at y-1**. Both are predictive diagnostics, not causal estimates or investment recommendations. Validation reports ROC-AUC, PR-AUC, Brier skill, lift and calibration diagnostics using rolling out-of-time cohorts.
+The entry model asks whether a currently sub-threshold product-market relationship crosses the configured threshold within three years. The persistence model is conditional on entry and, from v0.1.1 onward, uses **pre-entry features measured at y-1**. Both are predictive diagnostics, not causal estimates or investment recommendations. Validation reports ROC-AUC, PR-AUC, Brier skill, lift and calibration diagnostics using rolling out-of-time cohorts.
 
 See `docs/methodology.md`, `docs/data_dictionary.md`, `models/qa_report.json` (after a full build), and `release_manifest.json` before use.

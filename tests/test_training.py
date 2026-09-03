@@ -36,4 +36,4 @@ def test_survival_features_are_pre_entry(tmp_path: Path):
     assert r['destination_market_usd']==10_000_000
     assert r['bd_prev']==50_000
     assert r['bd_entry']==200_000
-    assert r['survives_3y']==1
+    assert r['active_after_3y']==1

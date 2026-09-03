@@ -25,7 +25,8 @@ def main():
     snap=build_latest_snapshot(
         agg,ROOT/'data'/'private'/'product_market_latest.parquet',
         latest_year=max(p['years']),base_year=max(p['years'])-5,
-        min_market_usd=cfg['thresholds']['min_destination_product_market_usd'],metadata_dir=metadata
+        min_market_usd=cfg['thresholds']['min_destination_product_market_usd'],
+        growth_base_min_usd=cfg['thresholds'].get('growth_base_min_usd',1_000_000),metadata_dir=metadata
     )
 
     entry_panel=make_transition_panel(agg,p['years'],cfg['thresholds']['entry_usd'])
@@ -44,19 +45,19 @@ def main():
         snap.loc[snap['bd_exports_to_destination_usd']>=cfg['thresholds']['entry_usd'],'entry_probability_3y']=pd.NA
     else:
         snap['entry_probability_3y']=pd.NA
-    if len(survival_panel)>=max(100,cfg['thresholds']['min_model_observations']//5) and survival_panel['survives_3y'].nunique()==2:
-        surv_model,latest_rep,rolling=temporal_validate_and_refit(survival_panel,'survives_3y')
-        reports['survival_probability_3y']={
-            'feature_timing':'features observed at y-1, before the new entry at y; outcome is active at y+3',
+    if len(survival_panel)>=max(100,cfg['thresholds']['min_model_observations']//5) and survival_panel['active_after_3y'].nunique()==2:
+        surv_model,latest_rep,rolling=temporal_validate_and_refit(survival_panel,'active_after_3y')
+        reports['persistence_probability_3y']={
+            'feature_timing':'features observed at y-1, before the new entry at y; outcome is exports at/above the threshold in y+3; intervening years may be intermittent',
             'latest_holdout':latest_rep,
             'rolling_holdouts':rolling,
         }
-        save_model(surv_model,model_dir/'survival_probability_3y.pkl')
-        snap['survival_probability_3y']=score_model(surv_model,snap)
+        save_model(surv_model,model_dir/'persistence_probability_3y.pkl')
+        snap['persistence_probability_3y']=score_model(surv_model,snap)
     else:
-        snap['survival_probability_3y']=pd.NA
-    snap['execution_probability']=snap['entry_probability_3y'].astype('Float64')*snap['survival_probability_3y'].astype('Float64')
-    snap['model_specification']='v0.1.1: market structure + entity-ranked Bangladesh product/destination experience; survival predictors are pre-entry'
+        snap['persistence_probability_3y']=pd.NA
+    snap['durable_entry_score']=snap['entry_probability_3y'].astype('Float64')*snap['persistence_probability_3y'].astype('Float64')
+    snap['model_specification']='v0.1.2: market structure + absolute and entity-ranked Bangladesh product/destination experience; growth from de minimis historical bases is neutralized; persistence predictors are pre-entry'
     snap.to_parquet(ROOT/'data'/'private'/'product_market_latest.parquet',index=False,compression='zstd')
     if reports:
         save_reports(reports,model_dir/'validation_report.json')

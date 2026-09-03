@@ -102,13 +102,12 @@ variables:
   definition: Transparent descriptive index combining market size, growth, and supplier
     openness; not an export-potential estimate.
   source: BEOED calculation.
-- name: readiness_index
+- name: trade_familiarity_index
   table: product_market_latest
   type: double
   layer: manufactured
   public: true
-  definition: Transparent descriptive index combining Bangladesh product experience
-    and destination familiarity.
+  definition: Transparent descriptive index combining Bangladesh product export experience and destination familiarity. It is not a technical-readiness or production-capability measure.
   source: BEOED calculation.
 - name: entry_probability_3y
   table: execution_private
@@ -118,21 +117,19 @@ variables:
   definition: Out-of-time calibrated probability that Bangladesh enters the product-destination
     market above the entry threshold within three years.
   source: BEOED model estimated on historical BACI transitions.
-- name: survival_probability_3y
+- name: persistence_probability_3y
   table: execution_private
   type: double
   layer: model
   public: false
-  definition: Probability that a newly entered product-destination relationship remains
-    active three years later, conditional on entry.
+  definition: Conditional probability that a newly entered product-destination relationship is active at the entry threshold three years later. Intervening years may be intermittent; this is persistence, not continuous survival.
   source: BEOED model estimated on historical BACI entries.
-- name: execution_probability
+- name: durable_entry_score
   table: execution_private
   type: double
   layer: model
   public: false
-  definition: entry_probability_3y multiplied by survival_probability_3y; a model
-    output, not a causal estimate.
+  definition: Product of entry_probability_3y and persistence_probability_3y. This is a composite ranking score, not a fixed-horizon calibrated probability.
   source: BEOED calculation.
 - name: diagnostic_flags
   table: execution_private
@@ -179,3 +176,60 @@ variables:
   public: true
   definition: World exports of the HS6 product in the latest BACI year.
   source: Derived from BACI 202601.
+
+- name: market_base_usd_5y
+  table: product_market_latest
+  type: double
+  layer: derived
+  public: true
+  definition: Destination imports of the HS6 product five years before the latest year, used to assess growth reliability.
+  source: Derived from BACI bilateral flows.
+- name: market_growth_status
+  table: product_market_latest
+  type: string
+  layer: manufactured
+  public: true
+  definition: Indicates whether the five-year growth calculation has a stable base (at least USD 1 million), a small base, or no observed base. Small/missing bases receive neutral growth contribution in market_attractiveness.
+  source: BEOED rule.
+- name: bd_product_exports_usd
+  table: product_market_latest
+  type: double
+  layer: derived
+  public: true
+  definition: Bangladesh exports of the HS6 product to all destinations in the latest BACI year.
+  source: Derived from BACI bilateral flows.
+- name: bd_product_destinations
+  table: product_market_latest
+  type: integer
+  layer: derived
+  public: true
+  definition: Number of destinations to which Bangladesh exports the HS6 product in the latest BACI year.
+  source: Derived from BACI bilateral flows.
+- name: capability_status
+  table: product_market_screening_v02
+  type: string
+  layer: manufactured
+  public: true
+  definition: Transparent capability class separating established RCA, observed emerging exports, observed adjacency, latent product-space adjacency, and distant/unobserved products. Latent adjacency requires feasibility validation.
+  source: BEOED rules from RCA, Bangladesh product exports, and product-space density.
+- name: screening_class
+  table: product_market_screening_v02
+  type: string
+  layer: manufactured
+  public: true
+  definition: Descriptive product-market screening class; explicitly not an investment recommendation or export-potential ranking.
+  source: BEOED transparent rules.
+- name: product_group
+  table: product_market_screening_v02
+  type: string
+  layer: manufactured
+  public: true
+  definition: Coarse HS-chapter product group used to distinguish manufacturing adjacency from resource/endowment-dependent adjacency.
+  source: BEOED HS-chapter mapping.
+- name: complexity_upgrade_flag
+  table: product_market_screening_v02
+  type: boolean
+  layer: manufactured
+  public: true
+  definition: Flags non-established manufacturing products with at least median PCI and observable/emergent or product-space-adjacent capability evidence. Requires further feasibility analysis.
+  source: BEOED rules from PCI and capability status.

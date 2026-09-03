@@ -10,10 +10,10 @@
 
 ## Example question
 
-> Which large and growing destination-product markets have low Bangladesh market share but relatively high readiness?
+> Which large and growing destination-product markets have low Bangladesh market share but relatively high trade familiarity?
 
-Filter the latest snapshot for high `destination_market_usd`, positive `market_cagr_5y`, low `bd_market_share`, and then rank using the transparent `market_attractiveness` and `readiness_index` fields.
+Filter the latest snapshot for high `destination_market_usd`, positive `market_cagr_5y`, low `bd_market_share`, and then rank using the transparent `market_attractiveness` and `trade_familiarity_index` fields.
 
 ## Important distinction
 
-`market_attractiveness` and `readiness_index` are descriptive screening indices. They are not forecasts. Private model fields such as `entry_probability_3y` are estimated separately and require out-of-time validation.
+`market_attractiveness` and `trade_familiarity_index` are descriptive screening indices. They are not forecasts. Private model fields such as `entry_probability_3y` are estimated separately and require out-of-time validation.

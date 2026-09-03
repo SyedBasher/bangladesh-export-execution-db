@@ -3,12 +3,18 @@ from pathlib import Path
 import duckdb
 import pandas as pd
 import numpy as np
-from .features import safe_cagr, add_experience_features
+from .features import reliable_growth_for_model, add_experience_features, add_absolute_model_features
 
 
 def _add_model_features(df: pd.DataFrame, *, prod_usd: str, prod_dest: str, dest_usd: str) -> pd.DataFrame:
     out = add_experience_features(
         df,
+        product_exports_col=prod_usd,
+        product_destinations_col=prod_dest,
+        destination_exports_col=dest_usd,
+    )
+    out = add_absolute_model_features(
+        out,
         product_exports_col=prod_usd,
         product_destinations_col=prod_dest,
         destination_exports_col=dest_usd,
@@ -61,7 +67,7 @@ def make_transition_panel(agg_dir: Path, years: list[int], entry_usd: float = 10
         if df.empty:
             continue
         df["hs6"] = df["hs6"].astype(str).str.zfill(6)
-        df["market_cagr_5y"] = safe_cagr(df["market_base"], df["destination_market_usd"], 5)
+        df["market_cagr_5y"] = reliable_growth_for_model(df["market_base"], df["destination_market_usd"], 5)
         df = _add_model_features(df, prod_usd="prod_usd", prod_dest="prod_dest", dest_usd="dest_usd")
         df["feature_year"] = y
         df["entry_within_3y"] = (df["future_max"] >= entry_usd).astype(int)
@@ -74,8 +80,8 @@ def make_survival_panel(agg_dir: Path, years: list[int], entry_usd: float = 100_
     """Historical new-entry cohorts and three-year survival outcomes.
 
     An entry at year y is a relationship below the threshold in y-1 and at/above it
-    in y. Crucially, all predictors are measured at y-1, *before entry*. Survival is
-    defined as exports at/above the threshold in y+3. This makes the conditional
+    in y. Crucially, all predictors are measured at y-1, *before entry*. Persistence is
+    defined as exports at/above the threshold in y+3; intervening years may be intermittent. This makes the conditional
     persistence model suitable for ex-ante scoring of currently unentered markets.
     """
     frames = []
@@ -124,9 +130,9 @@ def make_survival_panel(agg_dir: Path, years: list[int], entry_usd: float = 100_
         if df.empty:
             continue
         df["hs6"] = df["hs6"].astype(str).str.zfill(6)
-        df["market_cagr_5y"] = safe_cagr(df["market_base"], df["destination_market_usd"], 5)
+        df["market_cagr_5y"] = reliable_growth_for_model(df["market_base"], df["destination_market_usd"], 5)
         df = _add_model_features(df, prod_usd="prod_usd", prod_dest="prod_dest", dest_usd="dest_usd")
-        df["survives_3y"] = (df["bd_y3"] >= entry_usd).astype(int)
+        df["active_after_3y"] = (df["bd_y3"] >= entry_usd).astype(int)
         frames.append(df)
     con.close()
     return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()

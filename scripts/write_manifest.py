@@ -5,6 +5,9 @@ ROOT=Path(__file__).resolve().parents[1]
 paths={
  'public_latest':'data/public/beoed_public_latest.parquet',
  'public_screening_v02':'data/public/beoed_public_screening_v02.parquet',
+ 'sample_established_gaps':'data/public/beoed_established_product_market_gaps_sample.csv',
+ 'sample_emerging_products':'data/public/beoed_emerging_products_sample.csv',
+ 'sample_adjacent_manufacturing':'data/public/beoed_adjacent_manufacturing_sample.csv',
  'public_csv':'data/public/beoed_public_latest.csv.gz',
  'public_stata':'data/public/beoed_public_latest.dta',
  'public_duckdb':'data/public/beoed_public.duckdb',
@@ -19,6 +22,7 @@ manifest={
  'built_utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),
  'baci_release':'202601',
  'hs_revision':'HS2012',
+ 'beoed_schema_version':'v0.1.2',
  'release_status':'QA build; not a public opportunity ranking',
  'files':{},
 }
@@ -35,5 +39,6 @@ if qa.exists():
      'public_summary':q.get('public_summary'),
      'v02_summary':q.get('v02_summary'),
      'duckdb_summary':q.get('duckdb_summary'),
+     'model_quality_summary':q.get('model_quality_summary'),
  }
 (ROOT/'release_manifest.json').write_text(json.dumps(manifest,indent=2),encoding='utf-8')
