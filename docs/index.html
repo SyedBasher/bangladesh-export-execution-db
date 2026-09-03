@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="description" content="BEOED is a versioned Bangladesh trade-intelligence dataset moving from export opportunity to execution evidence." />
+  <meta name="theme-color" content="#09131f" />
+  <title>BEOED | Bangladesh Export Opportunity & Execution Database</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="assets/site.css" />
+</head>
+<body>
+  <div class="noise" aria-hidden="true"></div>
+  <header class="topbar">
+    <a class="brand" href="#top" aria-label="BEOED home">
+      <span class="brand-mark">B</span>
+      <span><strong>BEOED</strong><small>Bangladesh Export Intelligence</small></span>
+    </a>
+    <nav aria-label="Primary">
+      <a href="#why">Why</a>
+      <a href="#layers">Data layers</a>
+      <a href="#explorer">Explorer</a>
+      <a href="#method">Method</a>
+      <a href="#access">Access</a>
+    </nav>
+    <a class="ghost-button" href="https://github.com/SyedBasher/bangladesh-export-execution-db" target="_blank" rel="noreferrer">GitHub ↗</a>
+  </header>
+
+  <main id="top">
+    <section class="hero shell">
+      <div class="hero-copy">
+        <div class="eyebrow"><span class="pulse"></span> Research preview · public seed live</div>
+        <h1>From export potential<br><em>to execution probability.</em></h1>
+        <p class="lede">A versioned research data product linking product-market opportunity, historical entry and persistence, productive capability, and observed firm evidence for Bangladesh.</p>
+        <div class="hero-actions">
+          <a class="primary-button" href="#explorer">Explore the public seed</a>
+          <a class="text-button" href="BEOED_Companion_Methodology_and_Navigation_v0.4.pdf">Read methodology →</a>
+        </div>
+        <p class="microcopy">BEOED does not treat a generic “export potential score” as proprietary. The differentiated layer is execution: <strong>entry → survival → constraints → firm fit → value capture.</strong></p>
+      </div>
+      <div class="hero-panel" aria-label="BEOED analytical chain">
+        <div class="chain-title">Analytical chain</div>
+        <ol class="chain">
+          <li><span>01</span><div><b>Opportunity</b><small>Where is demand?</small></div></li>
+          <li><span>02</span><div><b>Entry</b><small>Can Bangladesh get in?</small></div></li>
+          <li><span>03</span><div><b>Persistence</b><small>Does the relationship survive?</small></div></li>
+          <li><span>04</span><div><b>Execution</b><small>Which capabilities and constraints matter?</small></div></li>
+        </ol>
+        <div class="panel-status">
+          <span>Full HS6 core</span>
+          <strong>Build in progress</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="metrics shell" aria-label="Current public seed metrics">
+      <article><strong>28</strong><span>observed firms</span><small>EPB public registry seed</small></article>
+      <article><strong>104</strong><span>firm–product links</span><small>observed, not inferred</small></article>
+      <article><strong>10</strong><span>factory districts</span><small>initial coverage</small></article>
+      <article><strong>4</strong><span>analytical layers</span><small>trade → execution → firm → value</small></article>
+    </section>
+
+    <section id="why" class="section shell">
+      <div class="section-head">
+        <span class="kicker">The problem</span>
+        <h2>Most trade databases stop too early.</h2>
+        <p>Market size, growth, tariffs and export potential are useful. They do not answer the questions that determine whether an opportunity is executable.</p>
+      </div>
+      <div class="question-grid">
+        <article class="question-card muted">
+          <span class="card-label">Common layer</span>
+          <h3>Where is the opportunity?</h3>
+          <p>Market size, growth, trade shares, tariffs, product relatedness and competitor structure.</p>
+        </article>
+        <article class="question-card">
+          <span class="card-label">BEOED layer</span>
+          <h3>Can Bangladesh enter and persist?</h3>
+          <p>Historical entry transitions, survival, destination familiarity, product experience and observable market structure.</p>
+        </article>
+        <article class="question-card accent">
+          <span class="card-label">Commissioned layer</span>
+          <h3>Who can execute—and what blocks them?</h3>
+          <p>Candidate firm capability, certification and input constraints, scenario analysis, financing needs and domestic value capture.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="layers" class="section shell">
+      <div class="section-head split">
+        <div>
+          <span class="kicker">Architecture</span>
+          <h2>One database, four evidence layers.</h2>
+        </div>
+        <p>Every layer carries provenance and an explicit distinction between observed, derived, model-estimated and unknown information.</p>
+      </div>
+      <div class="layer-list">
+        <article><span class="version">v0.1</span><div><h3>Trade & execution core</h3><p>Year × HS6 × destination; BACI 2012–2024; market structure, Bangladesh experience, historical entry and survival.</p></div><span class="status pending">building</span></article>
+        <article><span class="version">v0.2</span><div><h3>Complexity & market access</h3><p>RCA, PCI/ECI, product-space density; tariff and gravity adapters as documented sources are integrated.</p></div><span class="status pending">engine ready</span></article>
+        <article><span class="version">v0.3</span><div><h3>Firm capability registry</h3><p>Observed EPB firm-product registrations, factory locations, evidence grades and progressively enriched capability links.</p></div><span class="status live">seed live</span></article>
+        <article><span class="version">v0.4</span><div><h3>Domestic value capture</h3><p>Documented sector priors for imported inputs, domestic value added, labour, energy and financing intensity.</p></div><span class="status pending">framework ready</span></article>
+      </div>
+    </section>
+
+    <section id="explorer" class="section explorer-section">
+      <div class="shell">
+        <div class="section-head split">
+          <div>
+            <span class="kicker">Public explorer</span>
+            <h2>Observed firm–product evidence.</h2>
+          </div>
+          <p>This seed is intentionally narrow. An EPB registration is evidence of a public product link—not proof of current capacity, scale, certification or destination served.</p>
+        </div>
+
+        <div class="explorer-card">
+          <div class="filters">
+            <label>Search<input id="search" type="search" placeholder="Company or HS code…" /></label>
+            <label>District<select id="district"><option value="">All districts</option></select></label>
+            <label>Sector<select id="sector"><option value="">All sectors</option></select></label>
+            <button id="reset" class="filter-reset" type="button">Reset</button>
+          </div>
+          <div class="explorer-meta">
+            <span id="resultCount">Loading…</span>
+            <span class="evidence-key"><i></i> Confidence A = directly observed public registry link</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Company</th><th>Sector</th><th>District</th><th>Observed HS</th><th>Evidence</th></tr></thead>
+              <tbody id="firmTable"><tr><td colspan="5">Loading public seed…</td></tr></tbody>
+            </table>
+          </div>
+          <div class="explorer-foot">
+            <span>Source: Bangladesh Export Promotion Bureau public Exporter Database · retrieved 3 Sep 2026.</span>
+            <a href="https://raw.githubusercontent.com/SyedBasher/bangladesh-export-execution-db/main/data/public/firm_registry/firm_registry_seed.csv">CSV firms ↗</a>
+            <a href="https://raw.githubusercontent.com/SyedBasher/bangladesh-export-execution-db/main/data/public/firm_registry/firm_product_links_seed.csv">CSV links ↗</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="method" class="section shell">
+      <div class="section-head">
+        <span class="kicker">Method</span>
+        <h2>Designed to be auditable.</h2>
+        <p>Manufactured variables are useful only if a user can reconstruct what went into them and distinguish prediction from causal evidence.</p>
+      </div>
+      <div class="method-grid">
+        <article><span>01</span><h3>Versioned inputs</h3><p>Core trade statistics are pinned to a single CEPII BACI vintage rather than mixing revisions across years.</p></article>
+        <article><span>02</span><h3>Out-of-time validation</h3><p>Entry and survival models hold later cohorts out rather than reporting in-sample fit as predictive evidence.</p></article>
+        <article><span>03</span><h3>Evidence labels</h3><p>Observed, derived, model-estimated and unknown fields remain distinguishable throughout the database.</p></article>
+        <article><span>04</span><h3>Interpretation limits</h3><p>Scores are diagnostics, not causal estimates, guarantees, credit ratings or investment recommendations.</p></article>
+      </div>
+      <div class="method-actions">
+        <a class="primary-button small" href="BEOED_Companion_Methodology_and_Navigation_v0.4.pdf">Methodology & navigation guide</a>
+        <a class="text-button" href="methodology.md">Technical methodology →</a>
+        <a class="text-button" href="sources_licensing.md">Sources & licensing →</a>
+      </div>
+    </section>
+
+    <section id="access" class="section access-section">
+      <div class="shell access-grid">
+        <div>
+          <span class="kicker">Access</span>
+          <h2>Public evidence. Deeper execution work on request.</h2>
+          <p>The public layer documents sources, structure and selected diagnostics. Full product-market screening, historical entry/survival probabilities, candidate firm matching, constraint analysis and client-specific scenarios are intended for commissioned research.</p>
+        </div>
+        <div class="access-card">
+          <span class="access-tag">Institutional / commissioned</span>
+          <h3>Possible extensions</h3>
+          <ul>
+            <li>Sector × destination opportunity diagnostics</li>
+            <li>Competitor and market-entry decomposition</li>
+            <li>Firm-capability matching with client data</li>
+            <li>Constraint-removal and value-capture scenarios</li>
+          </ul>
+          <a class="primary-button" href="mailto:syed.basher@gmail.com?subject=BEOED%20research%20enquiry">Research enquiry</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="shell footer-grid">
+      <div><strong>BEOED</strong><p>Bangladesh Export Opportunity & Execution Database</p></div>
+      <div><span>Research data product</span><p>Independent analysis · not an official government database</p></div>
+      <div class="footer-links"><a href="https://github.com/SyedBasher/bangladesh-export-execution-db">GitHub</a><a href="#method">Method</a><a href="#access">Access</a></div>
+    </div>
+  </footer>
+  <script src="assets/app.js"></script>
+</body>
+</html>
