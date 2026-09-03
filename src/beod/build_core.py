@@ -109,18 +109,18 @@ def build_annual_aggregates(zip_path: Path, work_dir: Path, out_dir: Path,
                 COPY (
                     WITH s AS (
                       SELECT year, hs6, destination_code, exporter_code,
-                             SUM(value_usd) supplier_value
+                             SUM(value_usd) AS supplier_value
                       FROM raw GROUP BY 1,2,3,4
                     ), z AS (
-                      SELECT *, supplier_value / SUM(supplier_value) OVER(PARTITION BY year,hs6,destination_code) share,
-                             ROW_NUMBER() OVER(PARTITION BY year,hs6,destination_code ORDER BY supplier_value DESC) rn
+                      SELECT *, supplier_value / SUM(supplier_value) OVER(PARTITION BY year,hs6,destination_code) AS supplier_share,
+                             ROW_NUMBER() OVER(PARTITION BY year,hs6,destination_code ORDER BY supplier_value DESC) AS rn
                       FROM s
                     )
                     SELECT year, hs6, destination_code,
-                           SUM(supplier_value) destination_market_usd,
-                           SUM(share*share) supplier_hhi,
-                           MAX(CASE WHEN rn=1 THEN exporter_code END) top_supplier_code,
-                           MAX(CASE WHEN rn=1 THEN share END) top_supplier_share
+                           SUM(supplier_value) AS destination_market_usd,
+                           SUM(supplier_share*supplier_share) AS supplier_hhi,
+                           MAX(CASE WHEN rn=1 THEN exporter_code END) AS top_supplier_code,
+                           MAX(CASE WHEN rn=1 THEN supplier_share END) AS top_supplier_share
                     FROM z GROUP BY 1,2,3
                 ) TO '{ydir / 'market_structure.parquet'}' (FORMAT PARQUET, COMPRESSION ZSTD);
             """)
