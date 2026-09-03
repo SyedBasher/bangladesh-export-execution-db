@@ -88,7 +88,7 @@ def build_annual_aggregates(zip_path: Path, work_dir: Path, out_dir: Path,
             qcsv = str(csv_path).replace("'", "''")
             con.execute(f"""
                 CREATE OR REPLACE TEMP VIEW raw AS
-                SELECT CAST(t AS INTEGER) year,
+                SELECT CAST(t AS INTEGER) AS "year",
                        CAST(k AS VARCHAR) hs6,
                        CAST(i AS INTEGER) exporter_code,
                        CAST(j AS INTEGER) destination_code,
