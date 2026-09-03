@@ -1,0 +1,13 @@
+v02_sources:
+  tariffs:
+    preferred: ITC Market Access Map / WITS-TRAINS / WTO preference data
+    join: [hs6, destination_code]
+    redistribute_raw: false
+  product_space:
+    preferred: CEPII-BACI derived ECI/PCI and product proximity (or independently replicated Hausmann-Hidalgo method)
+    join: [hs6]
+    redistribute_raw: derived_only
+  gravity:
+    preferred: CEPII Gravity and/or ESCAP trade-cost database
+    join: [destination_code]
+    redistribute_raw: check_source_license

@@ -1,0 +1,11 @@
+v04:
+  initial_mapping_level: HS2
+  preferred_sources:
+    - Bangladesh input-output / supply-use tables where available
+    - OECD TiVA for cross-checks and imported-input content
+    - carefully documented SAM mappings where legally usable
+  rule: sector priors must never be labeled firm-specific
+  confidence_grades:
+    A: direct documented HS/industry mapping and recent source
+    B: defensible concordance with moderate aggregation
+    C: broad sector prior; exploratory only

@@ -1,0 +1,28 @@
+name: Publish data release
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag, e.g. v0.1.0
+        required: true
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.txt
+      - name: Run tests
+        run: python -m pytest -q
+      - run: python scripts/build_all.py
+      - name: Create release and upload public assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          gh release create "$TAG" --title "BEOED $TAG" --notes "Versioned public research release. See methodology and data dictionary before use." || true
+          gh release upload "$TAG" data/public/beoed_public_latest.parquet data/public/beoed_public_latest.csv.gz data/public/beoed_public_latest.dta data/public/beoed_public_sample.csv data/public/beoed_public.duckdb --clobber

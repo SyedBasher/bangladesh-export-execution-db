@@ -1,0 +1,45 @@
+name: Full BEOED build
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '30 3 15 2 *'
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - run: pip install -r requirements.txt
+      - name: Run tests
+        run: python -m pytest -q
+      - name: Build v0.1 trade/execution core
+        run: python scripts/build_all.py
+      - name: Build v0.2 internally-derived complexity/product-space layer
+        run: python scripts/build_v02.py
+      - name: Build v0.3 public firm-capability seed and private candidate links
+        run: python scripts/build_v03.py
+      - name: Build v0.4 if documented priors have been supplied
+        shell: bash
+        run: |
+          if [ -s data/external/value_capture_priors.csv ]; then
+            python scripts/build_v04.py
+          else
+            echo 'v0.4 skipped: no documented value_capture_priors.csv supplied.'
+          fi
+      - name: Write manifest
+        run: python scripts/write_manifest.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: beoed-full-build-${{ github.run_number }}
+          if-no-files-found: error
+          path: |
+            data/public/**
+            data/derived/v02/**
+            models/validation_report.json
+            release_manifest.json

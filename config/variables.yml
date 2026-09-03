@@ -1,0 +1,153 @@
+variables:
+- name: hs6
+  table: product_market_latest
+  type: string
+  layer: source
+  public: true
+  definition: Zero-padded HS6 product code.
+  source: CEPII BACI 202601 HS12.
+- name: product_name
+  table: product_market_latest
+  type: string
+  layer: source
+  public: true
+  definition: HS2012 product description from BACI metadata.
+  source: CEPII BACI product metadata.
+- name: destination_code
+  table: product_market_latest
+  type: integer
+  layer: source
+  public: true
+  definition: BACI numeric importer code.
+  source: CEPII BACI 202601.
+- name: iso3
+  table: product_market_latest
+  type: string
+  layer: source
+  public: true
+  definition: Three-letter economy code from BACI country metadata where available.
+  source: CEPII BACI country metadata.
+- name: destination_name
+  table: product_market_latest
+  type: string
+  layer: source
+  public: true
+  definition: Importer economy name from BACI metadata.
+  source: CEPII BACI metadata.
+- name: destination_market_usd
+  table: product_market_latest
+  type: double
+  layer: derived
+  public: true
+  definition: Total imports of the HS6 product by the destination from all suppliers.
+  source: Derived from BACI bilateral flows.
+- name: bd_exports_to_destination_usd
+  table: product_market_latest
+  type: double
+  layer: derived
+  public: true
+  definition: Bangladesh exports of the HS6 product to the destination.
+  source: Derived from BACI bilateral flows.
+- name: bd_market_share
+  table: product_market_latest
+  type: double
+  layer: manufactured
+  public: true
+  definition: Bangladesh exports divided by destination market imports for the HS6
+    product.
+  source: BEOED calculation from BACI.
+- name: market_cagr_5y
+  table: product_market_latest
+  type: double
+  layer: manufactured
+  public: true
+  definition: Five-year CAGR of destination imports of the HS6 product, where a valid
+    base exists.
+  source: BEOED calculation from BACI.
+- name: supplier_hhi
+  table: product_market_latest
+  type: double
+  layer: manufactured
+  public: true
+  definition: HHI of supplier shares in the destination-product market.
+  source: BEOED calculation from BACI.
+- name: top_supplier_share
+  table: product_market_latest
+  type: double
+  layer: manufactured
+  public: true
+  definition: Share of the largest foreign supplier in the destination-product market.
+  source: BEOED calculation from BACI.
+- name: destination_familiarity
+  table: product_market_latest
+  type: double
+  layer: manufactured
+  public: true
+  definition: Percentile-scaled measure of Bangladesh's total merchandise export relationship
+    with the destination.
+  source: BEOED calculation from BACI.
+- name: product_experience
+  table: product_market_latest
+  type: double
+  layer: manufactured
+  public: true
+  definition: Percentile-scaled measure of Bangladesh's global export scale and destination
+    breadth in the HS6 product.
+  source: BEOED calculation from BACI.
+- name: market_attractiveness
+  table: product_market_latest
+  type: double
+  layer: manufactured
+  public: true
+  definition: Transparent descriptive index combining market size, growth, and supplier
+    openness; not an export-potential estimate.
+  source: BEOED calculation.
+- name: readiness_index
+  table: product_market_latest
+  type: double
+  layer: manufactured
+  public: true
+  definition: Transparent descriptive index combining Bangladesh product experience
+    and destination familiarity.
+  source: BEOED calculation.
+- name: entry_probability_3y
+  table: execution_private
+  type: double
+  layer: model
+  public: false
+  definition: Out-of-time calibrated probability that Bangladesh enters the product-destination
+    market above the entry threshold within three years.
+  source: BEOED model estimated on historical BACI transitions.
+- name: survival_probability_3y
+  table: execution_private
+  type: double
+  layer: model
+  public: false
+  definition: Probability that a newly entered product-destination relationship remains
+    active three years later, conditional on entry.
+  source: BEOED model estimated on historical BACI entries.
+- name: execution_probability
+  table: execution_private
+  type: double
+  layer: model
+  public: false
+  definition: entry_probability_3y multiplied by survival_probability_3y; a model
+    output, not a causal estimate.
+  source: BEOED calculation.
+- name: diagnostic_flags
+  table: execution_private
+  type: string
+  layer: manufactured
+  public: false
+  definition: Semicolon-separated observable warning flags such as declining market,
+    high supplier concentration, low destination familiarity, or low product experience.
+    These are diagnostics, not proven causal constraints.
+  source: BEOED rules from observed variables.
+- name: confidence_grade
+  table: execution_private
+  type: string
+  layer: manufactured
+  public: false
+  definition: A/B/C grade based on data completeness, model support, and stability
+    across alternative specifications.
+  source: BEOED calculation.

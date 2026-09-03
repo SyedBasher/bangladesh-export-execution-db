@@ -1,0 +1,19 @@
+project:
+  name: Bangladesh Export Opportunity & Execution Database
+  short_name: BEOED
+  release: v0.1.0
+  hs_revision: HS12
+  baci_version: "202601"
+  years: [2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024]
+  bangladesh_baci_code: 50
+
+thresholds:
+  min_destination_product_market_usd: 5000000
+  entry_usd: 100000
+  scale_usd: 5000000
+  active_product_min_usd: 100000
+  min_model_observations: 500
+
+public_release:
+  include_model_probabilities: false
+  max_sample_rows: 5000

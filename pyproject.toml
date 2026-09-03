@@ -1,0 +1,17 @@
+[project]
+name = "beoed"
+version = "0.1.0"
+description = "Bangladesh Export Opportunity & Execution Database build pipeline"
+requires-python = ">=3.11"
+dependencies = [
+  "duckdb>=1.1.0",
+  "pandas>=2.2.0",
+  "numpy>=1.26.0",
+  "scikit-learn>=1.5.0",
+  "pyarrow>=17.0.0",
+  "requests>=2.32.0",
+  "pyyaml>=6.0.2"
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]

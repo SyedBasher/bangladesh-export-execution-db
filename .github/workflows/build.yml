@@ -1,0 +1,26 @@
+name: Build BEOED data
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '30 3 15 2 *'
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.txt
+      - run: python scripts/build_all.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: beoed-public-${{ github.run_number }}
+          path: |
+            data/public/beoed_public_latest.parquet
+            data/public/beoed_public_latest.csv.gz
+            data/public/beoed_public_latest.dta
+            data/public/beoed_public_sample.csv
+            data/public/beoed_public.duckdb

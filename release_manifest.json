@@ -1,0 +1,47 @@
+{
+  "built_utc": "2026-09-03T04:51:43.151108+00:00",
+  "baci_release": "202601",
+  "hs_revision": "HS2012",
+  "files": {
+    "public_latest": {
+      "path": "data/public/beoed_public_latest.parquet",
+      "exists": false,
+      "bytes": null
+    },
+    "public_csv": {
+      "path": "data/public/beoed_public_latest.csv.gz",
+      "exists": false,
+      "bytes": null
+    },
+    "public_stata": {
+      "path": "data/public/beoed_public_latest.dta",
+      "exists": false,
+      "bytes": null
+    },
+    "public_duckdb": {
+      "path": "data/public/beoed_public.duckdb",
+      "exists": false,
+      "bytes": null
+    },
+    "firm_registry": {
+      "path": "data/public/firm_registry/firm_registry_seed.csv",
+      "exists": true,
+      "bytes": 14361
+    },
+    "firm_product_links": {
+      "path": "data/public/firm_registry/firm_product_links_seed.csv",
+      "exists": true,
+      "bytes": 12663
+    },
+    "complexity": {
+      "path": "data/derived/v02/product_space_latest.parquet",
+      "exists": false,
+      "bytes": null
+    },
+    "validation": {
+      "path": "models/validation_report.json",
+      "exists": false,
+      "bytes": null
+    }
+  }
+}

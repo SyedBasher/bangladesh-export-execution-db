@@ -1,0 +1,148 @@
+\documentclass[11pt]{article}
+\usepackage[a4paper,margin=0.9in]{geometry}
+\usepackage{newtxtext,newtxmath}
+\usepackage{microtype}
+\usepackage{booktabs,tabularx,array}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\definecolor{linkblue}{RGB}{35,70,115}
+\hypersetup{colorlinks=true,urlcolor=linkblue,linkcolor=linkblue}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5pt}
+\setlist[itemize]{leftmargin=1.4em,itemsep=2pt,topsep=3pt}
+\pagestyle{fancy}\fancyhf{}\fancyhead[L]{\small BEOED Companion Guide}\fancyhead[R]{\small build v0.1--v0.4}\fancyfoot[C]{\thepage}
+\setlength{\headheight}{14pt}
+\titleformat{\section}{\large\bfseries}{\thesection.}{0.5em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{0.5em}{}
+\begin{document}
+\begin{center}
+{\LARGE\bfseries Bangladesh Export Opportunity \& Execution Database}\\[3pt]
+{\large Companion Guide: Data Architecture, Navigation, Methodology and Interpretation}\\[6pt]
+{\small Build guide v0.1--v0.4 -- 3 September 2026}
+\end{center}
+\vspace{4pt}\hrule\vspace{8pt}
+
+\textbf{Purpose.} BEOED is designed to sit one analytical layer above conventional trade databases. Existing platforms already show market size, export growth, revealed comparative advantage and, in some cases, export potential. BEOED instead asks whether a product--market opportunity is close to Bangladesh's observed capabilities, how similar historical entries behaved, whether new relationships survived, and what observable warning signals remain before a firm or institution should act.
+
+\section{What is being built}
+The core unit is initially
+\[
+\text{HS6 product}\times\text{destination}\times\text{year or release vintage}.
+\]
+The first public research edition is intentionally separated from an internal execution layer. This prevents the public dataset from becoming indistinguishable from the commercial research asset.
+
+\begin{center}
+\small
+\begin{tabularx}{0.96\textwidth}{>{\raggedright\arraybackslash}p{3.0cm} X X}
+\toprule
+Layer & Main contents & Distribution \\
+\midrule
+Source/derived layer & BACI product--destination flows, market size, Bangladesh exports, supplier structure, growth & Public research edition \\
+Manufactured descriptive layer & Bangladesh share, product experience, destination familiarity, market attractiveness, readiness & Public research edition \\
+Execution model layer & Entry and survival probabilities, calibration metrics, diagnostic flags, confidence grades & Internal / licensed \\
+Firm capability layer & Firm--product--certification--location--market evidence, tagged observed/inferred/unknown & Internal / commissioned \\
+Scenario layer & Constraint-removal scenarios, tariff shocks, market-entry diagnostics, domestic-value-capture extensions & Commissioned \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\section{Why Python is the production engine}
+Python with DuckDB is the source of truth. The reason is not stylistic. CEPII itself notes that BACI is too large for spreadsheet software. The 202601 release provides bilateral HS6 value and quantity flows through 2024 and, under HS2012, a consistent 2012--2024 window. Python/DuckDB can process those annual files sequentially, preserve leading zeros in HS codes, write compressed Parquet, run models, and generate user formats from one reproducible build.
+
+Stata remains important as a \emph{consumption and analysis format}. Every public release can therefore include a latest-snapshot \texttt{.dta} file plus example \texttt{.do} files. This gives Stata users immediate access without making Stata the production bottleneck.
+
+Excel is not the master format. It is reserved for the codebook, selected rankings, navigation help and small extracts. The historical product--market panel can exceed spreadsheet row limits and is more naturally stored in columnar Parquet or DuckDB.
+
+\section{File formats and distribution}
+\begin{itemize}
+\item \textbf{Parquet}: canonical analytical release; compact, typed and fast for filtered queries.
+\item \textbf{DuckDB}: packaged SQL database for users who want database-style access without a server.
+\item \textbf{CSV.GZ}: universal interchange format.
+\item \textbf{Stata .dta}: latest public snapshot for applied economists and institutional analysts.
+\item \textbf{Excel}: explorer/codebook only, not the complete master panel.
+\end{itemize}
+
+For GitHub, documentation and small samples belong in the repository/Pages site. Large versioned data files should be attached to GitHub Releases rather than committed directly. GitHub currently enforces a 100 MB hard limit for ordinary repository files, while individual release assets may be under 2 GiB. GitHub Pages is best treated as the documentation and research front end, not a payment or SaaS surface.
+
+\section{Source backbone and data integrity}
+The trade/execution core is pinned to \textbf{CEPII BACI 202601, HS2012, 2012--2024}. BACI is derived from UN Comtrade but reconciles exporter and importer reports, estimates and removes CIF costs from imports, and weights reporters according to reliability. CEPII lists BACI under the Etalab 2.0 licence.
+
+The build does not need to retain the entire global raw panel after processing. For each year it creates compact analytical tables:
+\begin{itemize}
+\item Bangladesh HS6 $\times$ destination flows;
+\item destination HS6 market size;
+\item supplier HHI, top supplier and top-supplier share;
+\item Bangladesh product export scale and destination breadth;
+\item Bangladesh total exports to each destination.
+\end{itemize}
+This is sufficient for a large part of the execution analysis while keeping the working database manageable.
+
+\section{Manufactured descriptive variables}
+\subsection{Market attractiveness}
+The public index is deliberately transparent rather than a black-box export-potential score:
+\[
+MA = 0.50\,P(\log \text{market size}) + 0.30\,P(\text{5-year market growth}) + 0.20\,P(1-\text{supplier HHI}),
+\]
+where $P(\cdot)$ denotes the percentile rank within the eligible product--market universe. It is a screening statistic, not a forecast and not a substitute for ITC's Export Potential methodology.
+
+\subsection{Readiness}
+\[
+R = 0.60\,\text{product experience}+0.40\,\text{destination familiarity}.
+\]
+Product experience combines Bangladesh's export scale in the HS6 line with the number of destinations already served. Destination familiarity is based on Bangladesh's broader export relationship with that market. Both are proxies for observed trade experience, not measures of plant-level production capacity.
+
+\subsection{Diagnostic flags}
+Initial flags include declining market, high supplier concentration, low destination familiarity, low product experience and already-high Bangladesh market share. Later versions can add tariff disadvantage, distance/trade cost, NTM/certification intensity and unit-value position. Flags are symptoms to investigate; they are not causal findings.
+
+\section{Entry, survival and execution models}
+The first genuinely proprietary layer is historical transition modelling.
+
+For each year $t$, define a product--destination observation as \emph{not entered} when Bangladesh exports remain below a stated threshold, initially US\$100,000. The entry outcome asks whether the relationship crosses that threshold within $t+1$ to $t+3$.
+
+The baseline model uses only information available at $t$: market size, five-year market growth, supplier HHI, top-supplier share, destination familiarity and product experience. The initial estimator is a regularised logit with probability calibration. Validation is strictly out of time; a model trained on earlier years is evaluated on later vintages. ROC-AUC, Brier score and calibration plots are reported before any probability is externally used.
+
+A second model is estimated among actual new entries:
+\[
+P(\text{active after 3 years}\mid\text{entry},X).
+\]
+The private execution measure is then
+\[
+P(\text{entry within 3 years})\times P(\text{survival after entry}).
+\]
+This is a predictive diagnostic. It must never be described as the causal effect of a policy or investment.
+
+\section{The populated firm-capability seed and what it does not yet know}
+The present package contains a populated seed of \textbf{28 EPB-registered firms and 104 observed firm--product links} covering initial examples in apparel, leather/footwear, jute, bicycles, plastics, pharmaceuticals and ceramics. Company/factory data and public HS registrations are retained; individual contact names, phone numbers and personal e-mail addresses are excluded from the public registry.\par
+
+An EPB registration is evidence that a firm is publicly associated with a product code. It is \emph{not} proof of current production capacity, quantity, export destination, profitability, machinery or certification. Candidate firm matching therefore begins with labels such as ``observed related HS4'' rather than ``can produce.'' The database still does not observe, for every Bangladeshi firm, exact machinery, capacity utilisation, customer lists, product-level margins, bank borrowing or all certifications. Every later relationship should remain tagged \textbf{observed}, \textbf{strongly inferred}, \textbf{model-estimated}, or \textbf{unknown}.
+
+This is a feature, not a defect, if handled honestly. A client-specific engagement can combine the BEOED historical infrastructure with private information on machinery, capacity, certifications, inputs and margins. The proprietary data product therefore becomes more useful when paired with the client's own execution data.
+
+\section{Release ladder now implemented}
+\textbf{v0.1 -- trade/execution core.} The pipeline constructs the HS6--destination history, supplier structure and Bangladesh experience variables, historical three-year entry cohorts and conditional survival cohorts. The latest eligible cohort is held out for out-of-time validation; AUC, Brier score and event rates are saved before the final model is refit on all historically observable cohorts.
+
+\textbf{v0.2 -- complexity/product-space layer.} The latest BACI country--product matrix is retained long enough to calculate Balassa RCA and replicate ECI/PCI from the normalized binary RCA matrix. Bangladesh density for each HS6 line is computed from co-export proximity. These are established research concepts rather than proprietary scores and should be independently cross-checked before external release. Optional adapters are already defined for tariffs and gravity/trade-cost variables.
+
+\textbf{v0.3 -- firm capability registry.} The initial seed described above is populated and distributed in CSV, Stata and an Excel explorer. The production schema supports systematic expansion without changing the unit of observation.
+
+\textbf{v0.4 -- domestic value capture.} The calculation engine and source template are implemented, but no value-added priors are fabricated. A documented input--output, SAM or TiVA-based mapping must be supplied first. Initial mappings are explicitly sector priors, not firm-specific estimates.
+
+\section{How users should navigate the release}
+A user asking ``Where should Bangladesh look next?'' should begin with the public snapshot and filter for sufficiently large markets. The next filters depend on the question: market growth, supplier openness, low Bangladesh share, and readiness. The result is a shortlist for investigation, not a recommendation.
+
+A commissioned analysis can then open the private layer: entry probability, survival probability, diagnostic flags, sensitivity to thresholds, competitor dynamics, tariffs and product-space measures. Firm-specific work adds private capability data before an actionable recommendation is made.
+
+\section{Release discipline}
+Every release should preserve the source vintage, HS revision, build date, code commit, thresholds and model specification. Material revisions receive a new semantic version. Historical public releases should not be silently replaced, because the database will eventually become more valuable precisely because it records what the system said \emph{before} subsequent export outcomes were observed.
+
+\section*{Core references and source links}
+\small
+CEPII, \emph{BACI International Trade Database}, version 202601. \url{https://www.cepii.fr/CEPII/en/bdd_modele/bdd_modele_item.asp?id=37}.\\
+Gaulier, G. and Zignago, S. (2010), ``BACI: International Trade Database at the Product-Level,'' CEPII Working Paper 2010-23.\\
+International Trade Centre, \emph{Export Potential Map}, for benchmarking and methodological comparison. \url{https://exportpotential.intracen.org/}.\\
+Bangladesh Export Promotion Bureau, \emph{Exporter Database}, public firm/product registry, retrieved 3 September 2026. \url{https://edb.epb.gov.bd/}.\\
+GitHub documentation on repository, Pages and release-asset limits. \url{https://docs.github.com/}.\\
+\end{document}
