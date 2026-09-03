@@ -151,3 +151,31 @@ variables:
   definition: A/B/C grade based on data completeness, model support, and stability
     across alternative specifications.
   source: BEOED calculation.
+- name: pci
+  table: product_market_screening_v02
+  type: double
+  layer: manufactured
+  public: true
+  definition: Product Complexity Index derived internally from the latest BACI country-product RCA matrix.
+  source: BEOED replication from BACI 202601; benchmark before external publication of exact ranks.
+- name: density_bd
+  table: product_market_screening_v02
+  type: double
+  layer: manufactured
+  public: true
+  definition: Product-space density around Bangladesh's current RCA>=1 export capabilities.
+  source: BEOED calculation from BACI 202601 co-export proximity.
+- name: rca_bd
+  table: product_market_screening_v02
+  type: double
+  layer: manufactured
+  public: true
+  definition: Bangladesh Balassa revealed comparative advantage in the HS6 product in the latest year.
+  source: BEOED calculation from BACI 202601.
+- name: world_exports_usd
+  table: product_market_screening_v02
+  type: double
+  layer: derived
+  public: true
+  definition: World exports of the HS6 product in the latest BACI year.
+  source: Derived from BACI 202601.

@@ -1,39 +1,50 @@
 # Bangladesh Export Opportunity & Execution Database (BEOED)
 
-BEOED is a research data product designed to move beyond the question **"where is export demand?"** toward the harder questions **"can Bangladesh execute, which relationships persist, which firms appear related to the capability, what is blocking execution, and how much domestic value could be captured?"**
+BEOED is a research data product designed to move beyond **"where is export demand?"** toward the harder questions **"is a product-market relationship close to Bangladesh's observed capabilities, how often do comparable relationships enter and persist, which firms appear related to the capability, what may be blocking execution, and how much domestic value could be captured?"**
 
-## Architecture
+## Current status
+
+The repository is in **QA / pre-release development**. The full BACI production pipeline has been run successfully, but the outputs should not yet be described as a public ranking of Bangladesh export opportunities. The build contains explicit QA gates and separates descriptive screening variables from private predictive execution variables.
 
 | Layer | Grain | Status |
 |---|---|---|
-| v0.1 trade/execution core | year x HS6 x destination | production pipeline complete; populate on GitHub runner |
-| v0.2 complexity/market access | HS6 and HS6 x destination | BACI complexity/product-space engine complete; tariff/gravity adapters ready |
-| v0.3 firm capability registry | firm x observed product | **seed populated: 28 firms / 104 links** |
-| v0.4 value capture | HS/industry prior x product-market | engine/template complete; requires documented source priors |
+| v0.1 trade/execution core | latest HS6 × destination, with historical model panels | populated; QA revision in progress |
+| v0.2 complexity/product-space screening | HS6 and HS6 × destination | populated from BACI; public transparent component fields only |
+| v0.3 firm capability registry | firm × observed product | seed populated: 28 firms / 104 observed links |
+| v0.4 value capture | sector prior × product-market | engine/template complete; requires documented source priors |
 
 ## What is differentiated
-BEOED does **not** claim that a generic export-potential score is proprietary. ITC and other platforms already do that well. The intended proprietary layer is execution:
 
-`opportunity -> entry probability -> persistence -> observable constraint signatures -> candidate firm capability -> value capture`
+BEOED does **not** claim that a generic export-potential score is proprietary. ITC and other platforms already provide sophisticated export-potential analytics. BEOED's intended additional layer is execution:
 
-Model outputs are predictive diagnostics, not causal estimates or investment recommendations.
+`market screen -> capability proximity -> entry probability -> persistence -> observable constraint signatures -> candidate firm capability -> value capture`
+
+The public files expose transparent descriptive components. Entry, survival, execution, firm-match and later constraint outputs remain research/commissioned layers unless explicitly released.
+
+## Key interpretation rule
+
+`market_attractiveness` is **not** an export-opportunity ranking. A large, fast-growing, contestable foreign market can score highly even when Bangladesh has little plausible production capability. The v0.2 product-space fields (`density_bd`, `rca_bd`, `pci`) are therefore kept separate rather than collapsed into a black-box public score.
 
 ## Build
 
 ```bash
 pip install -r requirements.txt
-python scripts/build_all.py     # v0.1, including private entry/survival models
-python scripts/build_v02.py     # BACI complexity/product-space + optional market-access sources
+python scripts/build_all.py     # v0.1 trade core + private entry/survival models
+python scripts/build_v02.py     # BACI RCA/ECI/PCI/density + transparent public screening file
 python scripts/build_v03.py     # firm registry + private candidate firm matches
 python scripts/build_v04.py     # only after documented value-capture priors are supplied
+python scripts/run_qa.py        # release QA gate
+python scripts/write_manifest.py
 ```
 
-The full automated GitHub build is in `.github/workflows/full_build.yml`.
+The automated GitHub workflow is `.github/workflows/full_build.yml`.
 
 ## Data provenance
-Core trade data: CEPII BACI 202601, HS2012, 2012–2024. CEPII distributes BACI under the Etalab Open Licence 2.0 and requests source attribution. Firm seed data: Bangladesh Export Promotion Bureau public Exporter Database, retrieved 3 September 2026. Public firm outputs omit personal contact information.
 
-## Interpretation guardrail
-An EPB product registration is an **observed relationship in the registry**. It is not proof of current plant capacity, quantity exported, destination served, technical certification, profitability, or ability to manufacture a related product. Candidate firm matches retain that distinction explicitly.
+Core trade data: CEPII BACI 202601, HS2012, 2012–2024. BACI reconciles exporter/importer reports from UN Comtrade. Firm seed data: Bangladesh Export Promotion Bureau public Exporter Database, retrieved 3 September 2026. Public firm outputs omit personal contact information.
 
-See `BUILD_STATUS.md`, `docs/methodology.md`, and the companion guide before use.
+## Model interpretation
+
+The entry model asks whether a currently sub-threshold product-market relationship crosses the configured threshold within three years. The survival model is conditional on entry and, from v0.1.1 onward, uses **pre-entry features measured at y-1**. Both are predictive diagnostics, not causal estimates or investment recommendations. Validation reports ROC-AUC, PR-AUC, Brier skill, lift and calibration diagnostics using rolling out-of-time cohorts.
+
+See `docs/methodology.md`, `docs/data_dictionary.md`, `models/qa_report.json` (after a full build), and `release_manifest.json` before use.

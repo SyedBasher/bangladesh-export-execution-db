@@ -32,6 +32,8 @@ jobs:
           else
             echo 'v0.4 skipped: no documented value_capture_priors.csv supplied.'
           fi
+      - name: Run release QA gate
+        run: python scripts/run_qa.py
       - name: Write manifest
         run: python scripts/write_manifest.py
       - uses: actions/upload-artifact@v4
@@ -42,4 +44,5 @@ jobs:
             data/public/**
             data/derived/v02/**
             models/validation_report.json
+            models/qa_report.json
             release_manifest.json

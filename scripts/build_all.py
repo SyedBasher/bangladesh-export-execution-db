@@ -33,28 +33,41 @@ def main():
     model_dir=ROOT/'models'
     reports={}
     if len(entry_panel)>=cfg['thresholds']['min_model_observations'] and entry_panel['entry_within_3y'].nunique()==2:
-        entry_model,reports['entry_probability_3y']=temporal_validate_and_refit(entry_panel,'entry_within_3y')
+        entry_model,latest_rep,rolling=temporal_validate_and_refit(entry_panel,'entry_within_3y')
+        reports['entry_probability_3y']={
+            'feature_timing':'features observed at cohort year y; outcome is entry in y+1..y+3',
+            'latest_holdout':latest_rep,
+            'rolling_holdouts':rolling,
+        }
         save_model(entry_model,model_dir/'entry_probability_3y.pkl')
         snap['entry_probability_3y']=score_model(entry_model,snap)
         snap.loc[snap['bd_exports_to_destination_usd']>=cfg['thresholds']['entry_usd'],'entry_probability_3y']=pd.NA
     else:
         snap['entry_probability_3y']=pd.NA
     if len(survival_panel)>=max(100,cfg['thresholds']['min_model_observations']//5) and survival_panel['survives_3y'].nunique()==2:
-        surv_model,reports['survival_probability_3y']=temporal_validate_and_refit(survival_panel,'survives_3y')
+        surv_model,latest_rep,rolling=temporal_validate_and_refit(survival_panel,'survives_3y')
+        reports['survival_probability_3y']={
+            'feature_timing':'features observed at y-1, before the new entry at y; outcome is active at y+3',
+            'latest_holdout':latest_rep,
+            'rolling_holdouts':rolling,
+        }
         save_model(surv_model,model_dir/'survival_probability_3y.pkl')
         snap['survival_probability_3y']=score_model(surv_model,snap)
     else:
         snap['survival_probability_3y']=pd.NA
     snap['execution_probability']=snap['entry_probability_3y'].astype('Float64')*snap['survival_probability_3y'].astype('Float64')
-    snap['model_specification']='v0.1 baseline: market structure + Bangladesh product/destination experience'
+    snap['model_specification']='v0.1.1: market structure + entity-ranked Bangladesh product/destination experience; survival predictors are pre-entry'
     snap.to_parquet(ROOT/'data'/'private'/'product_market_latest.parquet',index=False,compression='zstd')
-    if reports: save_reports(reports,model_dir/'validation_report.json')
+    if reports:
+        save_reports(reports,model_dir/'validation_report.json')
     entry_panel.to_parquet(ROOT/'data'/'private'/'entry_training_panel.parquet',index=False,compression='zstd')
     survival_panel.to_parquet(ROOT/'data'/'private'/'survival_training_panel.parquet',index=False,compression='zstd')
 
     export_public(snap,ROOT/'data'/'public',cfg['public_release']['max_sample_rows'])
     build_duckdb(ROOT/'data'/'public',ROOT/'data'/'public'/'beoed_public.duckdb')
     print(f"Built {len(snap):,} latest-year product-market rows; entry cohorts={len(entry_panel):,}; survival cohorts={len(survival_panel):,}")
-    for k,r in reports.items(): print(k,r)
+    for k,r in reports.items():
+        print(k,r['latest_holdout'])
 
-if __name__=='__main__': main()
+if __name__=='__main__':
+    main()

@@ -6,7 +6,7 @@ import duckdb
 import pandas as pd
 import numpy as np
 
-from .features import pct_rank, safe_cagr, add_transparent_indices, diagnostic_flags
+from .features import safe_cagr, add_experience_features, add_transparent_indices, diagnostic_flags
 
 
 def _extract_member(zf: zipfile.ZipFile, member: str, temp_dir: Path) -> Path:
@@ -16,6 +16,26 @@ def _extract_member(zf: zipfile.ZipFile, member: str, temp_dir: Path) -> Path:
         shutil.copyfileobj(src, dst, length=8 * 1024 * 1024)
     return target
 
+
+def _repair_mojibake(value):
+    """Repair common UTF-8-as-Latin-1 mojibake without changing valid Unicode."""
+    if pd.isna(value):
+        return pd.NA
+    s = str(value)
+    bad = ("Ã", "Â", "â€", "ðŸ")
+    if not any(marker in s for marker in bad):
+        return s
+    try:
+        candidate = s.encode("latin-1").decode("utf-8")
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        return s
+    before = sum(s.count(x) for x in bad)
+    after = sum(candidate.count(x) for x in bad)
+    return candidate if after < before else s
+
+
+def _clean_text_series(s: pd.Series) -> pd.Series:
+    return s.map(_repair_mojibake).astype("string")
 
 
 def build_metadata(zip_path: Path, work_dir: Path, out_dir: Path) -> tuple[Path | None, Path | None]:
@@ -30,30 +50,36 @@ def build_metadata(zip_path: Path, work_dir: Path, out_dir: Path) -> tuple[Path 
 
         if country_members:
             f = _extract_member(zf, country_members[0], work_dir)
-            c = pd.read_csv(f, dtype=str)
+            c = pd.read_csv(f, dtype=str, encoding="utf-8-sig")
             lower = {x.lower(): x for x in c.columns}
             code_col = next((lower[k] for k in ["country_code", "code"] if k in lower), c.columns[0])
             name_col = next((lower[k] for k in ["country_name_full", "country_name", "name"] if k in lower), None)
-            iso3_col = next((lower[k] for k in ["iso_3digit_alpha", "iso3", "iso_alpha3"] if k in lower), None)
+            iso3_col = next(
+                (lower[k] for k in ["country_iso3", "iso_3digit_alpha", "iso3", "iso_alpha3"] if k in lower),
+                None,
+            )
             if name_col:
+                iso = _clean_text_series(c[iso3_col]).str.upper() if iso3_col else pd.Series(pd.NA, index=c.index, dtype="string")
+                iso = iso.where(iso.str.fullmatch(r"[A-Z]{3}", na=False), pd.NA)
                 out = pd.DataFrame({
                     "country_code": pd.to_numeric(c[code_col], errors="coerce").astype("Int64"),
-                    "country_name": c[name_col].astype(str),
-                    "iso3": c[iso3_col].astype(str) if iso3_col else pd.NA,
+                    "country_name": _clean_text_series(c[name_col]),
+                    "iso3": iso,
                 }).dropna(subset=["country_code"])
+                out = out.drop_duplicates("country_code")
                 out.to_parquet(country_out, index=False, compression="zstd")
             f.unlink(missing_ok=True)
 
         if product_members:
             f = _extract_member(zf, product_members[0], work_dir)
-            h = pd.read_csv(f, dtype=str)
+            h = pd.read_csv(f, dtype=str, encoding="utf-8-sig")
             lower = {x.lower(): x for x in h.columns}
             code_col = next((lower[k] for k in ["code", "product_code", "hs6"] if k in lower), h.columns[0])
             desc_col = next((lower[k] for k in ["description", "product_name", "name"] if k in lower), None)
             if desc_col:
                 out = pd.DataFrame({
                     "hs6": h[code_col].astype(str).str.replace(r"\.0$", "", regex=True).str.zfill(6),
-                    "product_name": h[desc_col].astype(str),
+                    "product_name": _clean_text_series(h[desc_col]),
                 }).drop_duplicates("hs6")
                 out.to_parquet(product_out, index=False, compression="zstd")
             f.unlink(missing_ok=True)
@@ -64,15 +90,7 @@ def build_metadata(zip_path: Path, work_dir: Path, out_dir: Path) -> tuple[Path 
 def build_annual_aggregates(zip_path: Path, work_dir: Path, out_dir: Path,
                             years: list[int], bd_code: int = 50,
                             version: str = "202601"):
-    """
-    Build compact annual tables without retaining the global row-level BACI panel.
-    For each year the pipeline keeps:
-      - Bangladesh HS6 x destination flows
-      - destination x HS6 market size/quantity
-      - destination x HS6 supplier HHI/top supplier share
-      - Bangladesh HS6 global totals and destination breadth
-      - Bangladesh destination totals
-    """
+    """Build compact annual BACI aggregates without retaining the global row panel."""
     out_dir.mkdir(parents=True, exist_ok=True)
     con = duckdb.connect()
     with zipfile.ZipFile(zip_path) as zf:
@@ -89,18 +107,18 @@ def build_annual_aggregates(zip_path: Path, work_dir: Path, out_dir: Path,
             con.execute(f"""
                 CREATE OR REPLACE TEMP VIEW raw AS
                 SELECT CAST(t AS INTEGER) AS "year",
-                       CAST(k AS VARCHAR) hs6,
-                       CAST(i AS INTEGER) exporter_code,
-                       CAST(j AS INTEGER) destination_code,
-                       CAST(v AS DOUBLE) * 1000.0 value_usd,
-                       TRY_CAST(q AS DOUBLE) quantity
+                       LPAD(CAST(k AS VARCHAR), 6, '0') AS hs6,
+                       CAST(i AS INTEGER) AS exporter_code,
+                       CAST(j AS INTEGER) AS destination_code,
+                       CAST(v AS DOUBLE) * 1000.0 AS value_usd,
+                       TRY_CAST(q AS DOUBLE) AS quantity
                 FROM read_csv_auto('{qcsv}', header=true, all_varchar=true);
             """)
             con.execute(f"""
                 COPY (
                     SELECT year, hs6, destination_code,
-                           SUM(value_usd) bd_exports_to_destination_usd,
-                           SUM(quantity) bd_export_qty
+                           SUM(value_usd) AS bd_exports_to_destination_usd,
+                           SUM(quantity) AS bd_export_qty
                     FROM raw WHERE exporter_code={bd_code}
                     GROUP BY 1,2,3
                 ) TO '{ydir / 'bd_flows.parquet'}' (FORMAT PARQUET, COMPRESSION ZSTD);
@@ -112,8 +130,9 @@ def build_annual_aggregates(zip_path: Path, work_dir: Path, out_dir: Path,
                              SUM(value_usd) AS supplier_value
                       FROM raw GROUP BY 1,2,3,4
                     ), z AS (
-                      SELECT *, supplier_value / SUM(supplier_value) OVER(PARTITION BY year,hs6,destination_code) AS supplier_share,
-                             ROW_NUMBER() OVER(PARTITION BY year,hs6,destination_code ORDER BY supplier_value DESC) AS rn
+                      SELECT *,
+                             supplier_value / NULLIF(SUM(supplier_value) OVER(PARTITION BY year,hs6,destination_code),0) AS supplier_share,
+                             ROW_NUMBER() OVER(PARTITION BY year,hs6,destination_code ORDER BY supplier_value DESC, exporter_code) AS rn
                       FROM s
                     )
                     SELECT year, hs6, destination_code,
@@ -127,8 +146,8 @@ def build_annual_aggregates(zip_path: Path, work_dir: Path, out_dir: Path,
             con.execute(f"""
                 COPY (
                     SELECT year, hs6,
-                           SUM(value_usd) bd_product_exports_usd,
-                           COUNT(DISTINCT destination_code) bd_product_destinations
+                           SUM(value_usd) AS bd_product_exports_usd,
+                           COUNT(DISTINCT destination_code) AS bd_product_destinations
                     FROM raw WHERE exporter_code={bd_code}
                     GROUP BY 1,2
                 ) TO '{ydir / 'bd_product.parquet'}' (FORMAT PARQUET, COMPRESSION ZSTD);
@@ -136,19 +155,16 @@ def build_annual_aggregates(zip_path: Path, work_dir: Path, out_dir: Path,
             con.execute(f"""
                 COPY (
                     SELECT year, destination_code,
-                           SUM(value_usd) bd_destination_exports_usd
+                           SUM(value_usd) AS bd_destination_exports_usd
                     FROM raw WHERE exporter_code={bd_code}
                     GROUP BY 1,2
                 ) TO '{ydir / 'bd_destination.parquet'}' (FORMAT PARQUET, COMPRESSION ZSTD);
             """)
-            # Keep the global country-product matrix only for the latest year.
-            # It is sufficient for v0.2 RCA/PCI/density calculations and avoids
-            # retaining the full bilateral BACI archive in derived storage.
             if year == max(years):
                 con.execute(f"""
                     COPY (
                         SELECT year, exporter_code AS country_code, hs6,
-                               SUM(value_usd) export_value_usd
+                               SUM(value_usd) AS export_value_usd
                         FROM raw GROUP BY 1,2,3
                     ) TO '{ydir / 'country_product.parquet'}' (FORMAT PARQUET, COMPRESSION ZSTD);
                 """)
@@ -166,10 +182,10 @@ def build_latest_snapshot(agg_dir: Path, out_file: Path, latest_year: int = 2024
       WITH cur AS (
         SELECT m.year, m.hs6, m.destination_code, m.destination_market_usd,
                m.supplier_hhi, m.top_supplier_code, m.top_supplier_share,
-               COALESCE(b.bd_exports_to_destination_usd,0) bd_exports_to_destination_usd,
-               COALESCE(p.bd_product_exports_usd,0) bd_product_exports_usd,
-               COALESCE(p.bd_product_destinations,0) bd_product_destinations,
-               COALESCE(d.bd_destination_exports_usd,0) bd_destination_exports_usd
+               COALESCE(b.bd_exports_to_destination_usd,0) AS bd_exports_to_destination_usd,
+               COALESCE(p.bd_product_exports_usd,0) AS bd_product_exports_usd,
+               COALESCE(p.bd_product_destinations,0) AS bd_product_destinations,
+               COALESCE(d.bd_destination_exports_usd,0) AS bd_destination_exports_usd
         FROM read_parquet('{ly / 'market_structure.parquet'}') m
         LEFT JOIN read_parquet('{ly / 'bd_flows.parquet'}') b USING(year,hs6,destination_code)
         LEFT JOIN read_parquet('{ly / 'bd_product.parquet'}') p USING(year,hs6)
@@ -184,11 +200,10 @@ def build_latest_snapshot(agg_dir: Path, out_file: Path, latest_year: int = 2024
     """
     df = con.execute(sql).df()
     con.close()
+    df["hs6"] = df["hs6"].astype(str).str.zfill(6)
     df["bd_market_share"] = df["bd_exports_to_destination_usd"] / df["destination_market_usd"].replace(0, np.nan)
     df["market_cagr_5y"] = safe_cagr(df["market_base"], df["destination_market_usd"], latest_year-base_year)
-    df["destination_familiarity"] = pct_rank(np.log1p(df["bd_destination_exports_usd"]))
-    exp = 0.75 * pct_rank(np.log1p(df["bd_product_exports_usd"])) + 0.25 * pct_rank(df["bd_product_destinations"])
-    df["product_experience"] = exp.clip(0, 1)
+    df = add_experience_features(df)
     df["log_market_usd"] = np.log1p(df["destination_market_usd"])
     df = add_transparent_indices(df)
     df["diagnostic_flags"] = df.apply(diagnostic_flags, axis=1)
@@ -197,10 +212,10 @@ def build_latest_snapshot(agg_dir: Path, out_file: Path, latest_year: int = 2024
         pfile = metadata_dir / "products.parquet"
         if cfile.exists():
             c = pd.read_parquet(cfile).rename(columns={"country_code": "destination_code", "country_name": "destination_name"})
-            df = df.merge(c[["destination_code", "destination_name", "iso3"]], on="destination_code", how="left")
+            df = df.merge(c[["destination_code", "destination_name", "iso3"]], on="destination_code", how="left", validate="many_to_one")
         if pfile.exists():
             h = pd.read_parquet(pfile)
-            df = df.merge(h[["hs6", "product_name"]], on="hs6", how="left")
+            df = df.merge(h[["hs6", "product_name"]], on="hs6", how="left", validate="many_to_one")
     out_file.parent.mkdir(parents=True, exist_ok=True)
     df.to_parquet(out_file, index=False, compression="zstd")
     return df

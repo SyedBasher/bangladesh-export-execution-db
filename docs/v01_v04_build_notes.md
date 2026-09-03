@@ -1,29 +1,31 @@
 # BEOED v0.1–v0.4 build notes
 
+## v0.1.1 QA revision
+
+This revision corrects five issues identified in the first successful full build:
+
+1. BACI 202601 country metadata uses `country_iso3`; the parser now recognizes it.
+2. Common UTF-8/Latin-1 mojibake in country/product labels is repaired conservatively.
+3. Product/destination percentile features are ranked across unique entities rather than repeated product-market rows.
+4. Survival predictors are measured at `t-1`, before the observed entry at `t`.
+5. DuckDB now stores physical tables and remains usable after the source Parquet files are moved.
+
+The model report is expanded to PR-AUC, Brier skill, lift and calibration metrics, with rolling temporal holdouts. A hard QA gate is run before artifacts are accepted.
+
 ## v0.1 predictive execution layer
-A product-destination **entry** observation is eligible when Bangladesh exports are below the configured threshold at year `t`; the outcome is whether exports cross the threshold in any of `t+1...t+3`. Features use information available at `t` only.
 
-A **survival** cohort is a newly entered relationship: below threshold at `t-1`, at/above threshold at `t`. The outcome is whether the relationship remains at/above threshold at `t+3`. The survival model is conditional on observed entry.
+A product-destination entry observation is eligible when Bangladesh is below the configured threshold at year `t`; the outcome is entry in any of `t+1...t+3`. Entry features are observed at `t`.
 
-Validation is temporal: the latest eligible cohort year is held out (or the latest two where needed for outcome variation), then the final model is refit on all historically observable cohorts. Report AUC, Brier score, event rates and cohort years. Do not market an unvalidated probability as a forecast.
+A survival cohort enters at `t` after being below threshold at `t-1`; outcome is activity at `t+3`. **Survival features are observed at `t-1`.**
 
 ## v0.2 product-space layer
-The latest BACI country-product export matrix is converted to Balassa RCA. The binary `RCA >= 1` matrix is normalized by country diversity and product ubiquity. A singular-value decomposition supplies the non-trivial country/product eigenvectors used for ECI/PCI. Sign is oriented to make ECI positively related to diversity where identifiable, then scores are standardized.
 
-Bangladesh product density uses standard co-export proximity:
-`phi_pq = cooccurrence(p,q) / max(ubiquity_p, ubiquity_q)`.
-Density is the proximity-weighted share of related products in which Bangladesh has RCA >= 1. Self-proximity is removed.
-
-These are replications of established complexity concepts, not proprietary intellectual property. BEOED's intended proprietary contribution is the execution and constraint layer built on top.
+The latest BACI country-product matrix is converted to Balassa RCA. The binary `RCA >= 1` matrix is normalized by country diversity and product ubiquity; singular-value decomposition supplies the non-trivial country/product dimensions used for ECI/PCI. Bangladesh density uses standard co-export proximity. Public output exposes components rather than a combined opportunity score.
 
 ## v0.3 firm registry
-Public EPB company/factory records are normalized into:
-- `firm_registry`: one row per exporter record;
-- `firm_product_links`: one row per observed firm x HS code.
 
-The current seed is deliberately incomplete. Expansion should be systematic and versioned. Never silently infer missing HS codes. Company contact people, phones and personal email addresses are excluded from the public release.
-
-Candidate matching begins conservatively at shared HS4 and is labelled `observed_related_hs4`, not `can_produce`. Better matching can later use machinery, certifications, product descriptions, association membership, audited disclosures and client-provided data.
+Public EPB records are normalized into one-row-per-firm and one-row-per-observed-product-link tables. The seed remains deliberately incomplete. Candidate matches are labelled `observed_related_hs4`, not `can_produce`.
 
 ## v0.4 domestic value capture
-Gross export opportunity is not the same as domestic economic value. BEOED v0.4 is designed to attach documented sector priors for domestic value added, imported-input content, labour intensity, energy intensity and financing intensity. Initial mappings are sector priors; firm-level values require firm data.
+
+Gross export opportunity is not domestic value. v0.4 can attach documented sector priors for domestic value added, imported-input content, labour intensity, energy intensity and financing intensity. Firm-level values require firm data.
