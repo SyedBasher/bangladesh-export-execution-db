@@ -1,5 +1,8 @@
 # Bangladesh Export Opportunity & Execution Database (BEOED)
 
+> **QA status (v0.1.3):** The public screening layer now requires multi-year export evidence before calling a product established/emerging, adds import-dominance diagnostics, and separates downstream manufacturing adjacency from process-industry, advanced-technology, recycling, and endowment-linked cases. This is still a research/QA build, not a public opportunity ranking.
+
+
 BEOED is a research data product designed to move beyond **"where is export demand?"** toward the harder questions **"is a product-market relationship close to Bangladesh's observed capabilities, how often do comparable relationships enter and persist, which firms appear related to the capability, what may be blocking execution, and how much domestic value could be captured?"**
 
 ## Current status

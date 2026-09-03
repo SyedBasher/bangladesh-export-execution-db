@@ -8,6 +8,9 @@ paths={
  'sample_established_gaps':'data/public/beoed_established_product_market_gaps_sample.csv',
  'sample_emerging_products':'data/public/beoed_emerging_products_sample.csv',
  'sample_adjacent_manufacturing':'data/public/beoed_adjacent_manufacturing_sample.csv',
+ 'sample_recent_export_signals':'data/public/beoed_recent_export_signals_sample.csv',
+ 'sample_process_industry_validation':'data/public/beoed_process_industry_validation_sample.csv',
+ 'sample_advanced_technology_validation':'data/public/beoed_advanced_technology_validation_sample.csv',
  'public_csv':'data/public/beoed_public_latest.csv.gz',
  'public_stata':'data/public/beoed_public_latest.dta',
  'public_duckdb':'data/public/beoed_public.duckdb',
@@ -22,7 +25,7 @@ manifest={
  'built_utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),
  'baci_release':'202601',
  'hs_revision':'HS2012',
- 'beoed_schema_version':'v0.1.2',
+ 'beoed_schema_version':'v0.1.3',
  'release_status':'QA build; not a public opportunity ranking',
  'files':{},
 }

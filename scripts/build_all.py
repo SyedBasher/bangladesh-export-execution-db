@@ -57,7 +57,7 @@ def main():
     else:
         snap['persistence_probability_3y']=pd.NA
     snap['durable_entry_score']=snap['entry_probability_3y'].astype('Float64')*snap['persistence_probability_3y'].astype('Float64')
-    snap['model_specification']='v0.1.2: market structure + absolute and entity-ranked Bangladesh product/destination experience; growth from de minimis historical bases is neutralized; persistence predictors are pre-entry'
+    snap['model_specification']='v0.1.3: market structure + absolute and entity-ranked Bangladesh product/destination experience; public capability evidence adds five-year product persistence and import diagnostics; growth from de minimis historical bases is neutralized; persistence predictors are pre-entry'
     snap.to_parquet(ROOT/'data'/'private'/'product_market_latest.parquet',index=False,compression='zstd')
     if reports:
         save_reports(reports,model_dir/'validation_report.json')

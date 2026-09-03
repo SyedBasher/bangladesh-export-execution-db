@@ -168,6 +168,9 @@ def audit_release(
         v = pd.read_parquet(v02_path)
         class_counts = v["screening_class"].value_counts(dropna=False).to_dict() if "screening_class" in v else {}
         capability_counts = v["capability_status"].value_counts(dropna=False).to_dict() if "capability_status" in v else {}
+        evidence_counts = v["capability_evidence_status"].value_counts(dropna=False).to_dict() if "capability_evidence_status" in v else {}
+        archetype_counts = v["feasibility_archetype"].value_counts(dropna=False).to_dict() if "feasibility_archetype" in v else {}
+        import_dom = int(v["import_dominance_flag"].fillna(False).sum()) if "import_dominance_flag" in v else 0
         v02_summary = {
             "row_count": int(len(v)),
             "pci_coverage": float(v["pci"].notna().mean()) if "pci" in v else 0.0,
@@ -175,6 +178,9 @@ def audit_release(
             "rca_bd_coverage": float(v["rca_bd"].notna().mean()) if "rca_bd" in v else 0.0,
             "screening_class_counts": {str(k):int(val) for k,val in class_counts.items()},
             "capability_status_counts": {str(k):int(val) for k,val in capability_counts.items()},
+            "capability_evidence_counts": {str(k):int(val) for k,val in evidence_counts.items()},
+            "feasibility_archetype_counts": {str(k):int(val) for k,val in archetype_counts.items()},
+            "import_dominance_rows": import_dom,
             "complexity_upgrade_rows": int(v["complexity_upgrade_flag"].fillna(False).sum()) if "complexity_upgrade_flag" in v else 0,
         }
         if len(v) != len(pub):
@@ -184,9 +190,32 @@ def audit_release(
                 failures.append(f"v0.2 {c} below 95%")
         if "density_bd" in v and _bounds_fail(v["density_bd"],0,1):
             failures.append("density_bd has values outside [0,1]")
-        for col in ["capability_status","screening_class","product_group","market_condition"]:
+        for col in [
+            "capability_status","capability_evidence_status","screening_class","product_group",
+            "feasibility_archetype","commercial_screen_exclusion","market_condition","import_dominance_flag"
+        ]:
             if col not in v or v[col].isna().any():
                 failures.append(f"v0.2 classification field missing/incomplete: {col}")
+
+        # Semantics checks: outward-facing gap classes require persistent observed export evidence.
+        if "capability_evidence_status" in v and "screening_class" in v:
+            persistent = v["capability_evidence_status"].isin(["persistent_large","persistent_small"])
+            bad_est = int((v["screening_class"].eq("established_product_market_gap") & ~persistent).sum())
+            if bad_est:
+                failures.append(f"{bad_est} established market-gap rows lack persistent export evidence")
+            bad_emg = int((v["screening_class"].eq("emerging_product_market_gap") & ~v["capability_evidence_status"].eq("persistent_large")).sum())
+            if bad_emg:
+                failures.append(f"{bad_emg} emerging market-gap rows lack persistent-large export evidence")
+        if "import_dominance_flag" in v and "screening_class" in v:
+            bad_import = int((v["screening_class"].eq("emerging_product_market_gap") & v["import_dominance_flag"].fillna(False)).sum())
+            if bad_import:
+                failures.append(f"{bad_import} emerging market-gap rows are import-dominant")
+        if "commercial_screen_exclusion" in v and "screening_class" in v:
+            excluded = v["commercial_screen_exclusion"].ne("none")
+            allowed = v["screening_class"].eq("excluded_regulated_product")
+            leaked = int((excluded & ~allowed).sum())
+            if leaked:
+                failures.append(f"{leaked} excluded regulated rows leaked into commercial screening classes")
 
     duckdb_summary = {"exists": duckdb_path.exists()}
     if duckdb_path.exists():

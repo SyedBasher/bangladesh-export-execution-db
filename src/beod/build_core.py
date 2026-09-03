@@ -145,11 +145,26 @@ def build_annual_aggregates(zip_path: Path, work_dir: Path, out_dir: Path,
             """)
             con.execute(f"""
                 COPY (
-                    SELECT year, hs6,
-                           SUM(value_usd) AS bd_product_exports_usd,
-                           COUNT(DISTINCT destination_code) AS bd_product_destinations
-                    FROM raw WHERE exporter_code={bd_code}
-                    GROUP BY 1,2
+                    WITH ex AS (
+                      SELECT year, hs6,
+                             SUM(value_usd) AS bd_product_exports_usd,
+                             COUNT(DISTINCT destination_code) AS bd_product_destinations
+                      FROM raw WHERE exporter_code={bd_code}
+                      GROUP BY 1,2
+                    ), im AS (
+                      SELECT year, hs6,
+                             SUM(value_usd) AS bd_product_imports_usd,
+                             COUNT(DISTINCT exporter_code) AS bd_product_import_origins
+                      FROM raw WHERE destination_code={bd_code}
+                      GROUP BY 1,2
+                    )
+                    SELECT COALESCE(ex.year,im.year) AS year,
+                           COALESCE(ex.hs6,im.hs6) AS hs6,
+                           COALESCE(ex.bd_product_exports_usd,0) AS bd_product_exports_usd,
+                           COALESCE(ex.bd_product_destinations,0) AS bd_product_destinations,
+                           COALESCE(im.bd_product_imports_usd,0) AS bd_product_imports_usd,
+                           COALESCE(im.bd_product_import_origins,0) AS bd_product_import_origins
+                    FROM ex FULL OUTER JOIN im USING(year,hs6)
                 ) TO '{ydir / 'bd_product.parquet'}' (FORMAT PARQUET, COMPRESSION ZSTD);
             """)
             con.execute(f"""
@@ -186,6 +201,8 @@ def build_latest_snapshot(agg_dir: Path, out_file: Path, latest_year: int = 2024
                COALESCE(b.bd_exports_to_destination_usd,0) AS bd_exports_to_destination_usd,
                COALESCE(p.bd_product_exports_usd,0) AS bd_product_exports_usd,
                COALESCE(p.bd_product_destinations,0) AS bd_product_destinations,
+               COALESCE(p.bd_product_imports_usd,0) AS bd_product_imports_usd,
+               COALESCE(p.bd_product_import_origins,0) AS bd_product_import_origins,
                COALESCE(d.bd_destination_exports_usd,0) AS bd_destination_exports_usd
         FROM read_parquet('{ly / 'market_structure.parquet'}') m
         LEFT JOIN read_parquet('{ly / 'bd_flows.parquet'}') b USING(year,hs6,destination_code)
@@ -195,15 +212,38 @@ def build_latest_snapshot(agg_dir: Path, out_file: Path, latest_year: int = 2024
       ), base AS (
         SELECT hs6,destination_code,destination_market_usd AS market_base_usd_5y
         FROM read_parquet('{by / 'market_structure.parquet'}')
+      ), hist AS (
+        SELECT hs6,
+               COUNT(*) FILTER (WHERE bd_product_exports_usd > 0) AS bd_product_positive_years_5y,
+               COUNT(*) FILTER (WHERE bd_product_exports_usd >= 100000) AS bd_product_years_ge_100k_5y,
+               COUNT(*) FILTER (WHERE bd_product_exports_usd >= 1000000) AS bd_product_years_ge_1m_5y,
+               SUM(bd_product_exports_usd) AS bd_product_exports_5y_total_usd,
+               MAX(bd_product_exports_usd) AS bd_product_exports_5y_max_usd
+        FROM read_parquet('{agg_dir / 'year=*' / 'bd_product.parquet'}')
+        WHERE year BETWEEN {latest_year-4} AND {latest_year}
+        GROUP BY 1
       )
-      SELECT cur.*, base.market_base_usd_5y
-      FROM cur LEFT JOIN base USING(hs6,destination_code)
+      SELECT cur.*, base.market_base_usd_5y,
+             COALESCE(hist.bd_product_positive_years_5y,0) AS bd_product_positive_years_5y,
+             COALESCE(hist.bd_product_years_ge_100k_5y,0) AS bd_product_years_ge_100k_5y,
+             COALESCE(hist.bd_product_years_ge_1m_5y,0) AS bd_product_years_ge_1m_5y,
+             COALESCE(hist.bd_product_exports_5y_total_usd,0) AS bd_product_exports_5y_total_usd,
+             COALESCE(hist.bd_product_exports_5y_max_usd,0) AS bd_product_exports_5y_max_usd
+      FROM cur
+      LEFT JOIN base USING(hs6,destination_code)
+      LEFT JOIN hist USING(hs6)
     """
     df = con.execute(sql).df()
     con.close()
     df["hs6"] = df["hs6"].astype(str).str.zfill(6)
     df["bd_market_share"] = df["bd_exports_to_destination_usd"] / df["destination_market_usd"].replace(0, np.nan)
     df["market_cagr_5y"] = safe_cagr(df["market_base_usd_5y"], df["destination_market_usd"], latest_year-base_year)
+    df["bd_product_exports_5y_mean_usd"] = df["bd_product_exports_5y_total_usd"] / 5.0
+    df["bd_product_net_exports_usd"] = df["bd_product_exports_usd"] - df["bd_product_imports_usd"]
+    df["bd_product_log_export_import_ratio"] = (
+        np.log1p(pd.to_numeric(df["bd_product_exports_usd"],errors="coerce").fillna(0).clip(lower=0))
+        - np.log1p(pd.to_numeric(df["bd_product_imports_usd"],errors="coerce").fillna(0).clip(lower=0))
+    )
     df = add_experience_features(df)
     df = add_absolute_model_features(df)
     df["log_market_usd"] = np.log1p(df["destination_market_usd"])

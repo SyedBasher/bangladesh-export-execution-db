@@ -9,7 +9,10 @@ from .screening import sample_priority
 PUBLIC_COLS = [
     "year","hs6","product_name","destination_code","destination_name","iso3",
     "market_base_usd_5y","destination_market_usd","bd_exports_to_destination_usd",
-    "bd_product_exports_usd","bd_product_destinations","bd_market_share","market_cagr_5y",
+    "bd_product_exports_usd","bd_product_destinations","bd_product_imports_usd","bd_product_import_origins",
+    "bd_product_net_exports_usd","bd_product_log_export_import_ratio","bd_product_positive_years_5y",
+    "bd_product_years_ge_100k_5y","bd_product_years_ge_1m_5y","bd_product_exports_5y_mean_usd",
+    "bd_product_exports_5y_max_usd","bd_market_share","market_cagr_5y",
     "market_growth_status","supplier_hhi","top_supplier_share","destination_familiarity",
     "product_scale_pct","product_breadth_pct","product_experience","market_attractiveness",
     "trade_familiarity_index"
@@ -18,7 +21,8 @@ PUBLIC_COLS = [
 V02_PUBLIC_EXTRA = [
     "pci","pci_rank","pci_percentile","density_bd","density_bd_percentile",
     "rca_bd","bd_rca1","ubiquity_rca1","world_exports_usd","product_space_status",
-    "product_group","manufacturing_screen","capability_status","complexity_upgrade_flag",
+    "product_group","manufacturing_screen","feasibility_archetype","commercial_screen_exclusion",
+    "capability_status","capability_evidence_status","import_dominance_flag","complexity_upgrade_flag",
     "market_condition","screening_class"
 ]
 
@@ -108,7 +112,10 @@ def export_public_v02(snapshot_v02: pd.DataFrame, out_dir: Path, sample_rows: in
 
     _write_class_sample(pub, "established_product_market_gap", out_dir / "beoed_established_product_market_gaps_sample.csv")
     _write_class_sample(pub, "emerging_product_market_gap", out_dir / "beoed_emerging_products_sample.csv")
-    _write_class_sample(pub, "adjacent_manufacturing_requires_validation", out_dir / "beoed_adjacent_manufacturing_sample.csv")
+    _write_class_sample(pub, "adjacent_downstream_manufacturing_requires_validation", out_dir / "beoed_adjacent_manufacturing_sample.csv")
+    _write_class_sample(pub, "recent_export_signal_requires_validation", out_dir / "beoed_recent_export_signals_sample.csv")
+    _write_class_sample(pub, "adjacent_process_industry_requires_validation", out_dir / "beoed_process_industry_validation_sample.csv")
+    _write_class_sample(pub, "adjacent_advanced_technology_requires_validation", out_dir / "beoed_advanced_technology_validation_sample.csv")
 
     _write_stata_optional(pub, out_dir / "beoed_public_screening_v02.dta")
 

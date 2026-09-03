@@ -140,3 +140,13 @@ The workflow fails if critical checks do not pass. A machine-readable `models/qa
 EPB product registration is an observed registry relationship, not proof of current capacity, scale, destination, certification or profitability. Candidate firm matching therefore starts conservatively and is reserved for deeper investigation.
 
 Later execution layers may add tariff disadvantage, logistics, certification/NTM intensity, machinery, input structure, financing, domestic-value capture and client-supplied firm information. A product-space signal becomes actionable only after these execution constraints are investigated.
+
+## v0.1.3: persistence and feasibility diagnostics
+
+The latest-year export value is not treated as sufficient evidence of productive capability. BEOED now carries five-year product-export persistence measures: the number of years above USD 100,000 and USD 1 million, the five-year mean, and the latest five-year maximum. Public screening classes that use the words *established* or *emerging market gap* require persistent export evidence rather than a one-year spike.
+
+The latest BACI matrix is also used to compare Bangladesh exports and imports of the same HS6 product. `import_dominance_flag` is raised when current exports are at least USD 1 million while imports are at least USD 5 million and at least five times exports. This is only a diagnostic for import dependence or possible re-export contamination; it is not proof of re-exporting and does not measure domestic value added.
+
+Product-space adjacency is now interpreted jointly with a coarse `feasibility_archetype`. The archetypes distinguish downstream manufacturing from process/capital-intensive production, advanced technology, recycling/scrap, agri-food/endowment-linked products, and other cases. These categories are intentionally broad and are not substitutes for sector engineering, firm-level capability, certification, energy, feedstock, or cost analysis.
+
+Opportunity-style outward screening excludes regulated categories rather than ranking them. The underlying trade observations may remain in source/backbone tables, but they are not surfaced as commercial candidates.

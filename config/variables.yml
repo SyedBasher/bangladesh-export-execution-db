@@ -233,3 +233,80 @@ variables:
   public: true
   definition: Flags non-established manufacturing products with at least median PCI and observable/emergent or product-space-adjacent capability evidence. Requires further feasibility analysis.
   source: BEOED rules from PCI and capability status.
+- name: bd_product_imports_usd
+  table: product_market_latest
+  type: double
+  layer: derived
+  public: true
+  definition: Bangladesh imports of the HS6 product from all origins in the latest BACI year.
+  source: Derived from BACI bilateral flows.
+- name: bd_product_import_origins
+  table: product_market_latest
+  type: integer
+  layer: derived
+  public: true
+  definition: Number of origins from which Bangladesh imports the HS6 product in the latest BACI year.
+  source: Derived from BACI bilateral flows.
+- name: bd_product_years_ge_100k_5y
+  table: product_market_latest
+  type: integer
+  layer: manufactured
+  public: true
+  definition: Number of the latest five BACI years in which Bangladesh exported at least USD 100,000 of the HS6 product globally.
+  source: BEOED calculation from annual BACI product exports.
+- name: bd_product_years_ge_1m_5y
+  table: product_market_latest
+  type: integer
+  layer: manufactured
+  public: true
+  definition: Number of the latest five BACI years in which Bangladesh exported at least USD 1 million of the HS6 product globally.
+  source: BEOED calculation from annual BACI product exports.
+- name: bd_product_exports_5y_mean_usd
+  table: product_market_latest
+  type: double
+  layer: manufactured
+  public: true
+  definition: Mean annual Bangladesh exports of the HS6 product over the latest five years, treating non-export years as zero.
+  source: BEOED calculation from BACI.
+- name: bd_product_net_exports_usd
+  table: product_market_latest
+  type: double
+  layer: manufactured
+  public: true
+  definition: Bangladesh product exports minus product imports in the latest BACI year; a trade-position diagnostic, not domestic value added.
+  source: BEOED calculation from BACI.
+- name: bd_product_log_export_import_ratio
+  table: product_market_latest
+  type: double
+  layer: manufactured
+  public: true
+  definition: log(1+exports) minus log(1+imports) for the HS6 product; a scale-stable trade-position diagnostic.
+  source: BEOED calculation from BACI.
+- name: capability_evidence_status
+  table: product_market_screening_v02
+  type: string
+  layer: manufactured
+  public: true
+  definition: Five-year evidence class distinguishing persistent-large, persistent-small, recent-large, recent-small, and minimal/none export signals.
+  source: BEOED transparent rule from current and five-year Bangladesh product exports.
+- name: import_dominance_flag
+  table: product_market_screening_v02
+  type: boolean
+  layer: manufactured
+  public: true
+  definition: Flags current product exports of at least USD 1 million when Bangladesh imports at least USD 5 million and at least five times as much as it exports. This is a re-export/import-dependence diagnostic, not proof of re-exporting.
+  source: BEOED transparent rule from BACI trade flows.
+- name: feasibility_archetype
+  table: product_market_screening_v02
+  type: string
+  layer: manufactured
+  public: true
+  definition: Coarse production archetype separating downstream manufacturing, process/capital-intensive production, advanced technology, recycling/scrap, agri-food/endowment-linked products, and other cases. It is a diagnostic, not a feasibility determination.
+  source: BEOED HS/product-description mapping.
+- name: commercial_screen_exclusion
+  table: product_market_screening_v02
+  type: string
+  layer: manufactured
+  public: true
+  definition: Identifies categories excluded from commercial opportunity-style screening; excluded rows remain only as underlying trade observations.
+  source: BEOED screening policy.
