@@ -18,6 +18,37 @@ jobs:
       - run: pip install -r requirements.txt
       - name: Run tests
         run: python -m pytest -q
+
+      # BACI is a large annual source archive. CEPII can intermittently return
+      # HTTP 403 to cloud-runner IPs, so restore/save an immutable per-release
+      # cache and avoid redownloading it on every analytical rebuild.
+      - name: Restore BACI 202601 cache
+        id: baci-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: data/raw/BACI_HS12_V202601.zip
+          key: baci-hs12-v202601
+
+      - name: Fetch and validate BACI 202601 if cache is missing
+        if: steps.baci-cache.outputs.cache-hit != 'true'
+        env:
+          PYTHONPATH: src
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from beod.download import BACI_URL, download_file
+          p = Path('data/raw/BACI_HS12_V202601.zip')
+          download_file(BACI_URL, p)
+          print(f'BACI source ready: {p} ({p.stat().st_size:,} bytes)')
+          PY
+
+      - name: Save BACI 202601 cache
+        if: steps.baci-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: data/raw/BACI_HS12_V202601.zip
+          key: baci-hs12-v202601
+
       - name: Build v0.1 trade/execution core
         run: python scripts/build_all.py
       - name: Build v0.2 internally-derived complexity/product-space layer
